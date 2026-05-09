@@ -120,11 +120,11 @@ export default function Login() {
 
           <div className="grid grid-cols-2 gap-3">
              <button type="button" className="flex items-center justify-center px-4 py-2 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors font-medium text-sm text-[#505050]">
-                <Image src="https://www.svgrepo.com/show/355037/google.svg" alt="Google" width={20} height={20} className="mr-2" />
+                <Image src="https://www.svgrepo.com/show/355037/google.svg" alt="Google" width={20} height={20} className="mr-2" unoptimized />
                 Google
              </button>
              <button type="button" className="flex items-center justify-center px-4 py-2 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors font-medium text-sm text-[#505050]">
-                <Image src="https://www.svgrepo.com/show/353733/facebook.svg" alt="Facebook" width={20} height={20} className="mr-2" />
+                <Image src="https://upload.wikimedia.org/wikipedia/commons/b/b8/2021_Facebook_icon.svg" alt="Facebook" width={20} height={20} className="mr-2" unoptimized />
                 Facebook
              </button>
           </div>

@@ -2,13 +2,19 @@
 
 import { useState, useEffect, use } from "react";
 import { useRouter } from "next/navigation";
+import { useAuth } from "../../../../context/AuthContext";
 import Link from "next/link";
+import Loader from "../../../../components/Loader";
+import NextImage from "next/image";
 
 export default function EditProduct({ params: paramsPromise }) {
   const params = use(paramsPromise);
+  const { user, loading: authLoading } = useAuth();
   const router = useRouter();
   const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [imagePreview, setImagePreview] = useState("");
+  
   const [formData, setFormData] = useState({
     name: "",
     description: "",
@@ -16,207 +22,224 @@ export default function EditProduct({ params: paramsPromise }) {
     oldPrice: "",
     image: "",
     category: "",
-    subCategory: "",
     status: "",
-    supplierName: "",
-    supplierRegion: "",
-    supplierFlag: "",
-    supplierUrl: "",
+    stock: "",
   });
 
   useEffect(() => {
-    fetchProduct();
+    async function fetchProduct() {
+      try {
+        const res = await fetch(`/api/products/${params.id}`);
+        const data = await res.json();
+        if (res.ok) {
+          setFormData({
+            name: data.name,
+            description: data.description,
+            price: data.price,
+            oldPrice: data.oldPrice || "",
+            image: data.image,
+            category: data.category,
+            status: data.status,
+            stock: data.stock || 0,
+          });
+          setImagePreview(data.image);
+        }
+      } catch (error) {
+        console.error("Error fetching product:", error);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    if (params.id) {
+      fetchProduct();
+    }
   }, [params.id]);
 
-  const fetchProduct = async () => {
-    try {
-      const res = await fetch(`/api/products/${params.id}`);
-      const data = await res.json();
-      if (res.ok) {
-        setFormData(data);
-      } else {
-        alert("Product not found");
-        router.push("/admin");
-      }
-    } catch (error) {
-      console.error("Error fetching product:", error);
-    } finally {
-      setLoading(false);
+  useEffect(() => {
+    if (!authLoading && (!user || user.role !== "admin")) {
+      router.push("/");
     }
-  };
+  }, [user, authLoading, router]);
+
+  if (authLoading || loading || !user || user.role !== "admin") {
+    return <div className="container-custom py-20"><Loader /></div>;
+  }
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleFileUpload = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreview(reader.result);
+        setFormData(prev => ({ ...prev, image: reader.result }));
+      };
+      reader.readAsDataURL(file);
+    }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setSaving(true);
-
+    setIsSubmitting(true);
+    
     try {
       const res = await fetch(`/api/products/${params.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({
+          ...formData,
+          price: parseFloat(formData.price),
+          oldPrice: formData.oldPrice ? parseFloat(formData.oldPrice) : null,
+          stock: parseInt(formData.stock),
+        }),
       });
 
       if (res.ok) {
         router.push("/admin");
       } else {
-        const data = await res.json();
-        alert("Error: " + data.error);
+        alert("Failed to update product");
       }
     } catch (error) {
       console.error("Error updating product:", error);
-      alert("Failed to update product");
     } finally {
-      setSaving(false);
+      setIsSubmitting(false);
     }
   };
 
-  if (loading) return <div className="container-custom py-20 text-center">Loading product data...</div>;
-
   return (
-    <div className="container-custom py-10 max-w-4xl">
-      <div className="mb-8">
-        <Link href="/admin" className="text-primary hover:underline flex items-center gap-2 mb-4">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="m15 18-6-6 6-6"/></svg>
-          Back to Dashboard
-        </Link>
-        <h1 className="text-3xl font-bold text-[#1C1C1C]">Edit Product</h1>
-        <p className="text-[#8B96A5]">Editing product ID: {params.id}</p>
+    <div className="bg-[#F7FAFC] min-h-screen py-10">
+      <div className="container-custom max-w-4xl">
+        <div className="mb-6 flex items-center gap-4">
+          <Link href="/admin" className="text-primary hover:underline flex items-center gap-1 font-medium">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="m15 18-6-6 6-6"/></svg>
+            Back to Dashboard
+          </Link>
+        </div>
+
+        <div className="card p-8">
+          <h1 className="text-2xl font-bold text-[#1C1C1C] mb-8 border-b border-gray-100 pb-4">Edit Product</h1>
+          
+          <form onSubmit={handleSubmit} className="space-y-8">
+            <div className="grid grid-cols-1 md:grid-cols-12 gap-8">
+              
+              {/* Image Section */}
+              <div className="md:col-span-4">
+                <label className="block text-sm font-bold text-[#1C1C1C] mb-4 uppercase tracking-wide">Product Image</label>
+                <div className="relative group aspect-square rounded-2xl border-2 border-dashed border-gray-200 bg-gray-50 flex flex-col items-center justify-center overflow-hidden hover:border-primary transition-all">
+                  {imagePreview ? (
+                    <NextImage src={imagePreview} alt="Preview" fill className="object-contain p-4" unoptimized />
+                  ) : (
+                    <div className="text-center p-4 text-gray-300">
+                       <svg className="w-12 h-12 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                    </div>
+                  )}
+                  <input type="file" accept="image/*" onChange={handleFileUpload} className="absolute inset-0 opacity-0 cursor-pointer" />
+                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                    <span className="text-white font-bold text-xs bg-primary px-3 py-1.5 rounded-lg shadow-lg">Change Photo</span>
+                  </div>
+                </div>
+                <p className="text-[10px] text-[#8B96A5] mt-3 text-center">Click image to upload new photo</p>
+              </div>
+
+              {/* Fields Section */}
+              <div className="md:col-span-8 space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="md:col-span-2">
+                    <label className="block text-sm font-bold text-[#1C1C1C] mb-2 uppercase tracking-wide">Product Name</label>
+                    <input 
+                      type="text" 
+                      name="name"
+                      value={formData.name}
+                      onChange={handleChange}
+                      required
+                      className="w-full p-3 bg-gray-50 border border-gray-200 rounded-lg outline-none focus:border-primary transition-colors font-medium"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-bold text-[#1C1C1C] mb-2 uppercase tracking-wide">Regular Price ($)</label>
+                    <input 
+                      type="number" 
+                      name="price"
+                      value={formData.price}
+                      onChange={handleChange}
+                      required
+                      step="0.01"
+                      className="w-full p-3 bg-gray-50 border border-gray-200 rounded-lg outline-none focus:border-primary transition-colors"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-bold text-[#1C1C1C] mb-2 uppercase tracking-wide">Sale Price ($)</label>
+                    <input 
+                      type="number" 
+                      name="oldPrice"
+                      value={formData.oldPrice}
+                      onChange={handleChange}
+                      step="0.01"
+                      className="w-full p-3 bg-gray-50 border border-gray-200 rounded-lg outline-none focus:border-primary transition-colors"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-bold text-[#1C1C1C] mb-2 uppercase tracking-wide">Stock Quantity</label>
+                    <input 
+                      type="number" 
+                      name="stock"
+                      value={formData.stock}
+                      onChange={handleChange}
+                      required
+                      className="w-full p-3 bg-gray-50 border border-gray-200 rounded-lg outline-none focus:border-primary transition-colors font-bold text-primary"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-bold text-[#1C1C1C] mb-2 uppercase tracking-wide">Category</label>
+                    <select 
+                      name="category"
+                      value={formData.category}
+                      onChange={handleChange}
+                      className="w-full p-3 bg-gray-50 border border-gray-200 rounded-lg outline-none focus:border-primary transition-colors"
+                    >
+                      <option>Electronics</option>
+                      <option>Home & Outdoor</option>
+                      <option>Clothing & Wear</option>
+                      <option>Accessories</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-bold text-[#1C1C1C] mb-2 uppercase tracking-wide">Description</label>
+                  <textarea 
+                    name="description"
+                    value={formData.description}
+                    onChange={handleChange}
+                    required
+                    rows="4"
+                    className="w-full p-3 bg-gray-50 border border-gray-200 rounded-lg outline-none focus:border-primary transition-colors resize-none"
+                  ></textarea>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex justify-end pt-6 border-t border-gray-50">
+              <button 
+                type="submit" 
+                disabled={isSubmitting}
+                className="bg-primary text-white px-12 py-3 rounded-xl font-bold shadow-lg hover:bg-blue-700 transition-all active:scale-95 disabled:opacity-70 flex items-center gap-2"
+              >
+                {isSubmitting ? <><div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div> Saving Changes...</> : "Update Product"}
+              </button>
+            </div>
+          </form>
+        </div>
       </div>
-
-      <form onSubmit={handleSubmit} className="card p-8 space-y-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* Basic Info */}
-          <div className="space-y-4">
-            <h3 className="font-bold text-lg border-b pb-2">Basic Information</h3>
-            <div>
-              <label className="block text-sm font-medium text-[#505050] mb-1">Product Name</label>
-              <input 
-                type="text" name="name" required value={formData.name} onChange={handleChange}
-                className="w-full p-2 border border-gray-300 rounded outline-none focus:border-primary"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-[#505050] mb-1">Category</label>
-              <select 
-                name="category" value={formData.category} onChange={handleChange}
-                className="w-full p-2 border border-gray-300 rounded outline-none focus:border-primary"
-              >
-                <option>Electronics</option>
-                <option>Home & Outdoor</option>
-                <option>Clothing & Wear</option>
-                <option>Accessories</option>
-              </select>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-[#505050] mb-1">Sub-category</label>
-              <input 
-                type="text" name="subCategory" value={formData.subCategory} onChange={handleChange}
-                className="w-full p-2 border border-gray-300 rounded outline-none focus:border-primary"
-              />
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-[#505050] mb-1">Price ($)</label>
-                <input 
-                  type="number" step="0.01" name="price" required value={formData.price} onChange={handleChange}
-                  className="w-full p-2 border border-gray-300 rounded outline-none focus:border-primary"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-[#505050] mb-1">Old Price ($)</label>
-                <input 
-                  type="number" step="0.01" name="oldPrice" value={formData.oldPrice} onChange={handleChange}
-                  className="w-full p-2 border border-gray-300 rounded outline-none focus:border-primary"
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* Media & Status */}
-          <div className="space-y-4">
-            <h3 className="font-bold text-lg border-b pb-2">Media & Status</h3>
-            <div>
-              <label className="block text-sm font-medium text-[#505050] mb-1">Image URL</label>
-              <input 
-                type="url" name="image" required value={formData.image} onChange={handleChange}
-                className="w-full p-2 border border-gray-300 rounded outline-none focus:border-primary"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-[#505050] mb-1">Status</label>
-              <select 
-                name="status" value={formData.status} onChange={handleChange}
-                className="w-full p-2 border border-gray-300 rounded outline-none focus:border-primary"
-              >
-                <option>In stock</option>
-                <option>Out of stock</option>
-              </select>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-[#505050] mb-1">Description</label>
-              <textarea 
-                name="description" required value={formData.description} onChange={handleChange}
-                className="w-full p-2 border border-gray-300 rounded outline-none focus:border-primary h-24"
-              ></textarea>
-            </div>
-          </div>
-        </div>
-
-        {/* Supplier Info */}
-        <div className="space-y-4 pt-4 border-t">
-          <h3 className="font-bold text-lg">Supplier Details (Static Info)</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-[#505050] mb-1">Supplier Name</label>
-              <input 
-                type="text" name="supplierName" value={formData.supplierName} onChange={handleChange}
-                className="w-full p-2 border border-gray-300 rounded outline-none focus:border-primary"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-[#505050] mb-1">Region</label>
-              <input 
-                type="text" name="supplierRegion" value={formData.supplierRegion} onChange={handleChange}
-                className="w-full p-2 border border-gray-300 rounded outline-none focus:border-primary"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-[#505050] mb-1">Flag Emoji</label>
-              <input 
-                type="text" name="supplierFlag" value={formData.supplierFlag} onChange={handleChange}
-                className="w-full p-2 border border-gray-300 rounded outline-none focus:border-primary"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-[#505050] mb-1">Supplier URL</label>
-              <input 
-                type="text" name="supplierUrl" value={formData.supplierUrl} onChange={handleChange}
-                className="w-full p-2 border border-gray-300 rounded outline-none focus:border-primary"
-              />
-            </div>
-          </div>
-        </div>
-
-        <div className="flex justify-end gap-4 pt-6 border-t">
-          <button 
-            type="button" onClick={() => router.back()}
-            className="px-6 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
-          >
-            Cancel
-          </button>
-          <button 
-            type="submit" disabled={saving}
-            className="bg-primary text-white px-8 py-2 rounded-lg font-bold hover:bg-blue-700 transition-colors shadow-md disabled:bg-blue-300"
-          >
-            {saving ? "Saving..." : "Update Product"}
-          </button>
-        </div>
-      </form>
     </div>
   );
 }

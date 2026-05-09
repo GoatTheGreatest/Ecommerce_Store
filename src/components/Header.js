@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useCart } from "../context/CartContext";
 import { useAuth } from "../context/AuthContext";
 import { useState, useRef, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import NextImage from "next/image";
 
 const CATEGORIES = [
@@ -26,10 +26,12 @@ export default function Header() {
   const cartCount = items.reduce((total, item) => total + item.quantity, 0);
   const [searchCategory, setSearchCategory] = useState("All category");
   const [showUserMenu, setShowUserMenu] = useState(false);
-  const [showCatMenu, setShowCatMenu] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const router = useRouter();
-  const catMenuRef = useRef(null);
+  const pathname = usePathname();
+
+  // Hide header on login and register pages
+  if (pathname === "/login" || pathname === "/register") return null;
 
   const handleLogout = () => {
     logout();
@@ -51,16 +53,6 @@ export default function Header() {
     router.push(url);
   };
 
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (catMenuRef.current && !catMenuRef.current.contains(event.target)) {
-        setShowCatMenu(false);
-      }
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
-
   return (
     <header className="bg-white border-b border-gray-200 sticky top-0 z-50">
       {/* Top Header */}
@@ -74,7 +66,7 @@ export default function Header() {
         </Link>
 
         {/* Search Bar */}
-        <form onSubmit={handleSearch} className="flex-1 max-w-[660px] hidden md:flex border-2 border-primary rounded-lg overflow-hidden shadow-sm relative">
+        <form onSubmit={handleSearch} className="flex-1 max-w-[660px] hidden md:flex border-2 border-primary rounded-lg shadow-sm relative">
           <input
             type="text"
             placeholder="Search"
@@ -82,32 +74,29 @@ export default function Header() {
             onChange={(e) => setSearchQuery(e.target.value)}
             className="flex-1 px-4 py-2 outline-none text-[#1C1C1C]"
           />
-          <div 
-            ref={catMenuRef}
-            className="relative border-l border-gray-300 px-4 py-2 bg-white flex items-center gap-2 cursor-pointer whitespace-nowrap text-[#505050] hover:bg-gray-50 transition-colors"
-            onClick={() => setShowCatMenu(!showCatMenu)}
-          >
+          
+          {/* Category Dropdown (Hover-based) */}
+          <div className="relative border-l border-gray-300 px-4 py-2 bg-white flex items-center gap-2 cursor-pointer group whitespace-nowrap text-[#505050] hover:bg-gray-50 transition-colors">
             <span>{searchCategory}</span>
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="group-hover:rotate-180 transition-transform"><path d="m6 9 6 6 6-6"/></svg>
             
-            {showCatMenu && (
-              <div className="absolute top-full right-0 mt-2 w-48 bg-white rounded-lg shadow-xl border border-gray-100 py-2 z-[60] animate-in fade-in zoom-in duration-150">
-                {CATEGORIES.map(cat => (
-                  <div 
-                    key={cat}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setSearchCategory(cat);
-                      setShowCatMenu(false);
-                    }}
-                    className={`px-4 py-2 text-sm hover:bg-gray-50 hover:text-primary transition-colors ${searchCategory === cat ? 'text-primary font-bold bg-blue-50' : 'text-[#505050]'}`}
-                  >
-                    {cat}
-                  </div>
-                ))}
-              </div>
-            )}
+            {/* Dropdown Menu */}
+            <div className="absolute top-full right-0 mt-0 w-48 bg-white rounded-b-lg shadow-xl border border-gray-100 py-2 z-[60] opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200">
+              {CATEGORIES.map(cat => (
+                <div 
+                  key={cat}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setSearchCategory(cat);
+                  }}
+                  className={`px-4 py-2 text-sm hover:bg-gray-50 hover:text-primary transition-colors ${searchCategory === cat ? 'text-primary font-bold bg-blue-50' : 'text-[#505050]'}`}
+                >
+                  {cat}
+                </div>
+              ))}
+            </div>
           </div>
+          
           <button type="submit" className="bg-primary text-white px-8 py-2 font-medium hover:bg-blue-700 transition-all active:scale-95">
             Search
           </button>
@@ -116,10 +105,10 @@ export default function Header() {
         {/* User Actions */}
         <div className="flex items-center gap-4 md:gap-6 text-[#8B96A5] text-xs">
           {user ? (
-            <div className="relative">
+            <div className="relative group">
               <button 
-                onClick={() => setShowUserMenu(!showUserMenu)}
                 className="flex flex-col items-center gap-1 hover:text-primary transition-colors cursor-pointer"
+                onClick={() => setShowUserMenu(!showUserMenu)}
               >
                 <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center text-primary font-bold text-[10px] overflow-hidden">
                   {user.avatar ? (
@@ -131,24 +120,22 @@ export default function Header() {
                 <span>{user.name?.split(" ")[0]}</span>
               </button>
               
-              {showUserMenu && (
-                <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-xl border border-gray-100 py-2 z-50 animate-in fade-in zoom-in duration-150">
-                  <div className="px-4 py-2 border-b border-gray-50">
-                    <p className="text-[#1C1C1C] font-bold text-sm truncate">{user.name}</p>
-                    <p className="text-[#8B96A5] text-[10px] truncate">{user.email}</p>
-                    {user.role === "admin" && <span className="inline-block mt-1 bg-primary/10 text-primary px-2 py-0.5 rounded text-[9px] font-bold">ADMIN</span>}
-                  </div>
-                  <Link href="/profile" className="block px-4 py-2 text-sm text-[#505050] hover:bg-gray-50 hover:text-primary transition-colors" onClick={() => setShowUserMenu(false)}>My Profile</Link>
-                  <Link href="/orders" className="block px-4 py-2 text-sm text-[#505050] hover:bg-gray-50 hover:text-primary transition-colors" onClick={() => setShowUserMenu(false)}>My Orders</Link>
-                  {user.role === "admin" && <Link href="/admin" className="block px-4 py-2 text-sm text-primary font-semibold hover:bg-gray-50 transition-colors" onClick={() => setShowUserMenu(false)}>Admin Panel</Link>}
-                  <button 
-                    onClick={handleLogout}
-                    className="w-full text-left px-4 py-2 text-sm text-red-500 hover:bg-red-50 transition-colors border-t border-gray-50"
-                  >
-                    Log out
-                  </button>
+              <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-xl border border-gray-100 py-2 z-50 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200">
+                <div className="px-4 py-2 border-b border-gray-50">
+                  <p className="text-[#1C1C1C] font-bold text-sm truncate">{user.name}</p>
+                  <p className="text-[#8B96A5] text-[10px] truncate">{user.email}</p>
+                  {user.role === "admin" && <span className="inline-block mt-1 bg-primary/10 text-primary px-2 py-0.5 rounded text-[9px] font-bold">ADMIN</span>}
                 </div>
-              )}
+                <Link href="/profile" className="block px-4 py-2 text-sm text-[#505050] hover:bg-gray-50 hover:text-primary transition-colors">My Profile</Link>
+                <Link href="/orders" className="block px-4 py-2 text-sm text-[#505050] hover:bg-gray-50 hover:text-primary transition-colors">My Orders</Link>
+                {user.role === "admin" && <Link href="/admin" className="block px-4 py-2 text-sm text-primary font-semibold hover:bg-gray-50 transition-colors">Admin Panel</Link>}
+                <button 
+                  onClick={handleLogout}
+                  className="w-full text-left px-4 py-2 text-sm text-red-500 hover:bg-red-50 transition-colors border-t border-gray-50"
+                >
+                  Log out
+                </button>
+              </div>
             </div>
           ) : (
             <Link href="/login" className="flex flex-col items-center gap-1 hover:text-primary transition-colors">
@@ -181,10 +168,28 @@ export default function Header() {
       <div className="border-t border-gray-200 py-3 hidden md:block">
         <div className="container-custom flex items-center justify-between">
           <nav className="flex items-center gap-6 font-medium text-[#1C1C1C] text-sm">
-            <div className="flex items-center gap-2 cursor-pointer hover:text-primary transition-colors">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="4" x2="20" y1="12" y2="12"/><line x1="4" x2="20" y1="6" y2="6"/><line x1="4" x2="20" y1="18" y2="18"/></svg>
-              <span>All category</span>
+            {/* Main All Category Button with Hover Dropdown */}
+            <div className="relative group">
+              <div className="flex items-center gap-2 cursor-pointer hover:text-primary transition-colors py-1">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="4" x2="20" y1="12" y2="12"/><line x1="4" x2="20" y1="6" y2="6"/><line x1="4" x2="20" y1="18" y2="18"/></svg>
+                <span>All category</span>
+              </div>
+              
+              {/* Nav Dropdown */}
+              <div className="absolute top-full left-0 mt-0 w-56 bg-white rounded-b-lg shadow-2xl border border-gray-100 py-3 z-[60] opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 transform translate-y-2 group-hover:translate-y-0">
+                {CATEGORIES.slice(1).map(cat => (
+                  <Link 
+                    key={cat}
+                    href={`/products?category=${encodeURIComponent(cat)}`}
+                    className="flex items-center justify-between px-5 py-2.5 text-sm text-[#505050] hover:bg-blue-50 hover:text-primary transition-all group/item"
+                  >
+                    <span>{cat}</span>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="opacity-0 group-hover/item:opacity-100 transition-opacity"><path d="m9 18 6-6-6-6"/></svg>
+                  </Link>
+                ))}
+              </div>
             </div>
+
             <Link href="/" className="hover:text-primary transition-colors">Hot offers</Link>
             <Link href="/products" className="hover:text-primary transition-colors">Gift boxes</Link>
             <Link href="/menu" className="hover:text-primary transition-colors">Menu item</Link>

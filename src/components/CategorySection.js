@@ -1,4 +1,4 @@
-import Image from "next/image";
+import NextImage from "next/image";
 import Link from "next/link";
 
 export default function CategorySection({ title, image, items, categoryName }) {
@@ -6,7 +6,7 @@ export default function CategorySection({ title, image, items, categoryName }) {
     <section className="card flex flex-col md:flex-row overflow-hidden min-h-[257px]">
       {/* Left Sidebar */}
       <div className="relative w-full md:w-[280px] min-h-[150px] md:min-h-full">
-        <Image src={image} alt={title} fill sizes="(max-width: 768px) 100vw, 280px" className="object-cover" />
+        <NextImage src={image} alt={title} fill sizes="(max-width: 768px) 100vw, 280px" className="object-cover" />
         <div className="absolute inset-0 p-5 bg-black/5">
           <h3 className="text-xl font-bold text-[#1C1C1C] mb-4 max-w-[150px] leading-tight">{title}</h3>
           <Link 
@@ -34,7 +34,7 @@ export default function CategorySection({ title, image, items, categoryName }) {
               </div>
             </div>
             <div className="relative w-[80px] h-[80px] self-end mt-1">
-              <Image 
+              <NextImage 
                 src={item.image || "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=200&q=80"} 
                 alt={item.name} 
                 fill 

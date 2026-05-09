@@ -5,6 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useCart } from "../../context/CartContext";
+import Loader from "../../components/Loader";
 
 function ProductsContent() {
   const [viewMode, setViewMode] = useState("grid");
@@ -154,7 +155,7 @@ function ProductsContent() {
             {/* Product Grid */}
             <div className={viewMode === "grid" ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4" : "space-y-4"}>
               {loading ? (
-                <div className="col-span-full py-20 text-center text-[#8B96A5]">Loading products...</div>
+                <div className="col-span-full py-20"><Loader /></div>
               ) : products.length === 0 ? (
                 <div className="col-span-full py-20 text-center text-[#8B96A5]">No products found in this category.</div>
               ) : products.map((product) => (
@@ -166,6 +167,7 @@ function ProductsContent() {
                       fill 
                       sizes="(max-width: 768px) 100vw, (max-width: 1200px) 33vw, 25vw" 
                       className="object-contain" 
+                      loading={products.indexOf(product) < 6 ? "eager" : "lazy"}
                     />
                   </Link>
                   <div className="flex-1 flex flex-col">

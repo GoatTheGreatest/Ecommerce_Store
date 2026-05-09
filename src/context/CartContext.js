@@ -6,10 +6,16 @@ const CartContext = createContext();
 
 const cartReducer = (state, action) => {
   switch (action.type) {
-    case "ADD_TO_CART":
+    case "ADD_TO_CART": {
       const existingItem = state.items.find(
         (item) => (item._id || item.id) === (action.payload._id || action.payload.id),
       );
+      
+      // If moving from savedItems, remove it from there
+      const newSavedItems = state.savedItems.filter(
+        (item) => (item._id || item.id) !== (action.payload._id || action.payload.id)
+      );
+
       if (existingItem) {
         return {
           ...state,
@@ -18,12 +24,15 @@ const cartReducer = (state, action) => {
               ? { ...item, quantity: item.quantity + 1 }
               : item,
           ),
+          savedItems: newSavedItems
         };
       }
       return {
         ...state,
         items: [...state.items, { ...action.payload, quantity: 1 }],
+        savedItems: newSavedItems
       };
+    }
     case "REMOVE_FROM_CART":
       return {
         ...state,
@@ -38,18 +47,44 @@ const cartReducer = (state, action) => {
             : item,
         ),
       };
+    case "SAVE_FOR_LATER": {
+      const itemToSave = state.items.find(
+        (item) => (item._id || item.id) === action.payload
+      );
+      if (!itemToSave) return state;
+      
+      return {
+        ...state,
+        items: state.items.filter((item) => (item._id || item.id) !== action.payload),
+        savedItems: [...state.savedItems, itemToSave]
+      };
+    }
+    case "REMOVE_FROM_SAVED":
+      return {
+        ...state,
+        savedItems: state.savedItems.filter((item) => (item._id || item.id) !== action.payload),
+      };
     default:
       return state;
   }
 };
 
 export const CartProvider = ({ children }) => {
-  const [state, dispatch] = useReducer(cartReducer, { items: [] });
+  const [state, dispatch] = useReducer(cartReducer, { items: [], savedItems: [] });
   const [toast, setToast] = useState({ show: false, message: "" });
 
   const addToCart = (product) => {
     dispatch({ type: "ADD_TO_CART", payload: product });
     showToast("Item added to the cart");
+  };
+
+  const saveForLater = (id) => {
+    dispatch({ type: "SAVE_FOR_LATER", payload: id });
+    showToast("Item saved for later");
+  };
+
+  const removeFromSaved = (id) => {
+    dispatch({ type: "REMOVE_FROM_SAVED", payload: id });
   };
 
   const showToast = (message) => {
@@ -92,6 +127,8 @@ export const CartProvider = ({ children }) => {
         removeFromCart, 
         updateQuantity, 
         getTotal,
+        saveForLater,
+        removeFromSaved,
         toast,
         hideToast
       }}

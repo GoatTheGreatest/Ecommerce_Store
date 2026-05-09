@@ -22,8 +22,14 @@ export async function PATCH(request, { params }) {
   try {
     await dbConnect();
     const { id } = await params;
-    const body = await request.json();
-    const product = await Product.findByIdAndUpdate(id, body, {
+    const updates = { ...body };
+    
+    // Automatically update status based on stock
+    if (updates.stock !== undefined) {
+      updates.status = updates.stock > 0 ? 'In stock' : 'Out of stock';
+    }
+
+    const product = await Product.findByIdAndUpdate(id, updates, {
       new: true,
       runValidators: true,
     });

@@ -34,6 +34,11 @@ const CategorySection = ({ title, image, items, categoryName }) => (
               sizes="(max-width: 768px) 25vw, 15vw" 
               className="object-contain p-2 group-hover:scale-110 transition-transform" 
             />
+            {item.discountPercent > 0 && (
+              <div className="absolute top-0 left-0 bg-[#FFE3E3] text-[#EB001B] px-2 py-0.5 rounded-full text-[8px] font-black uppercase shadow-sm">
+                -{item.discountPercent}% OFF
+              </div>
+            )}
           </div>
           <p className="text-[#1C1C1C] text-xs line-clamp-1 group-hover:text-primary">{item.name}</p>
           <p className="text-[#8B96A5] text-[10px] mt-1">From <br/> USD {item.price}</p>
@@ -46,6 +51,16 @@ const CategorySection = ({ title, image, items, categoryName }) => (
 export default function Home() {
   const [displayProducts, setDisplayProducts] = useState([]);
   const [loading, setLoading] = useState(true);
+  
+  // Inquiry Form State
+  const [inquiryData, setInquiryData] = useState({
+    itemName: "",
+    details: "",
+    quantity: "",
+    unit: "Pcs"
+  });
+  const [submitting, setSubmitting] = useState(false);
+  const [success, setSuccess] = useState(false);
   const { user } = useAuth();
 
   useEffect(() => {
@@ -67,6 +82,41 @@ export default function Home() {
   const techItems = displayProducts.filter(p => p.category === "Electronics");
   const clothingItems = displayProducts.filter(p => p.category === "Clothing & Wear");
   const accessoryItems = displayProducts.filter(p => p.category === "Accessories");
+
+  const handleInquirySubmit = async (e) => {
+    e.preventDefault();
+    if (!user) {
+      alert("Please login to send inquiries");
+      return;
+    }
+
+    if (!inquiryData.itemName || !inquiryData.details || !inquiryData.quantity) {
+      alert("Please fill in all fields");
+      return;
+    }
+
+    setSubmitting(true);
+    try {
+      const res = await fetch("/api/inquiries", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ...inquiryData,
+          customer: { name: user.name, email: user.email }
+        })
+      });
+
+      if (res.ok) {
+        setSuccess(true);
+        setInquiryData({ itemName: "", details: "", quantity: "", unit: "Pcs" });
+        setTimeout(() => setSuccess(false), 3000);
+      }
+    } catch (error) {
+      console.error("Error sending inquiry:", error);
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
   return (
     <div className="container-custom py-5 space-y-6">
@@ -159,18 +209,57 @@ export default function Home() {
           </div>
           <div className="bg-white p-6 rounded-lg w-full max-w-md shadow-lg">
             <h3 className="text-xl font-bold mb-4 text-[#1C1C1C]">Send quote to suppliers</h3>
-            <div className="space-y-4">
-              <input type="text" placeholder="What item you need?" className="w-full p-2 border border-gray-300 rounded outline-none focus:border-primary" />
-              <textarea placeholder="Type more details" className="w-full p-2 border border-gray-300 rounded outline-none h-20 focus:border-primary resize-none"></textarea>
-              <div className="flex gap-4">
-                <input type="number" placeholder="Quantity" className="w-1/2 p-2 border border-gray-300 rounded outline-none focus:border-primary" />
-                <select className="w-1/2 p-2 border border-gray-300 rounded outline-none bg-white">
-                  <option>Pcs</option>
-                  <option>Kgs</option>
-                </select>
-              </div>
-              <button className="bg-primary text-white px-6 py-2 rounded-lg font-medium hover:bg-blue-700 transition-colors w-full">Send inquiry</button>
-            </div>
+            {success ? (
+               <div className="bg-green-50 border border-green-200 text-green-700 p-8 rounded-lg text-center animate-in fade-in zoom-in duration-300">
+                  <div className="text-4xl mb-2">✅</div>
+                  <p className="font-bold">Inquiry Sent!</p>
+                  <p className="text-xs opacity-70">Suppliers will contact you soon.</p>
+               </div>
+            ) : (
+              <form onSubmit={handleInquirySubmit} className="space-y-4">
+                <input 
+                  type="text" 
+                  placeholder="What item you need?" 
+                  required
+                  value={inquiryData.itemName}
+                  onChange={(e) => setInquiryData({...inquiryData, itemName: e.target.value})}
+                  className="w-full p-2 border border-gray-300 rounded outline-none focus:border-primary" 
+                />
+                <textarea 
+                  placeholder="Type more details" 
+                  required
+                  value={inquiryData.details}
+                  onChange={(e) => setInquiryData({...inquiryData, details: e.target.value})}
+                  className="w-full p-2 border border-gray-300 rounded outline-none h-20 focus:border-primary resize-none"
+                ></textarea>
+                <div className="flex gap-4">
+                  <input 
+                    type="number" 
+                    placeholder="Quantity" 
+                    required
+                    value={inquiryData.quantity}
+                    onChange={(e) => setInquiryData({...inquiryData, quantity: e.target.value})}
+                    className="w-1/2 p-2 border border-gray-300 rounded outline-none focus:border-primary" 
+                  />
+                  <select 
+                    value={inquiryData.unit}
+                    onChange={(e) => setInquiryData({...inquiryData, unit: e.target.value})}
+                    className="w-1/2 p-2 border border-gray-300 rounded outline-none bg-white"
+                  >
+                    <option>Pcs</option>
+                    <option>Kgs</option>
+                    <option>Boxes</option>
+                  </select>
+                </div>
+                <button 
+                  type="submit" 
+                  disabled={submitting}
+                  className="bg-primary text-white px-6 py-2 rounded-lg font-medium hover:bg-blue-700 transition-colors w-full disabled:opacity-50"
+                >
+                  {submitting ? "Sending..." : "Send inquiry"}
+                </button>
+              </form>
+            )}
           </div>
         </div>
       </section>
@@ -191,9 +280,20 @@ export default function Home() {
                     fill 
                     sizes="(max-width: 768px) 50vw, 20vw" 
                     className="object-contain group-hover:scale-105 transition-transform" 
+                    loading={displayProducts.indexOf(product) < 5 ? "eager" : "lazy"}
                   />
+                  {product.discountPercent > 0 && (
+                    <div className="absolute top-0 left-0 bg-[#FFE3E3] text-[#EB001B] px-3 py-1 rounded-full text-[10px] font-black uppercase shadow-sm">
+                      -{product.discountPercent}% OFF
+                    </div>
+                  )}
                 </div>
-                <p className="font-bold text-[#1C1C1C] mb-1">${product.price}</p>
+                <div className="flex flex-col mb-1">
+                  <p className="font-bold text-[#1C1C1C]">${product.price}</p>
+                  {product.oldPrice && (
+                    <p className="text-[10px] text-red-500 line-through decoration-dashed decoration-1 font-bold">${product.oldPrice}</p>
+                  )}
+                </div>
                 <p className="text-[#8B96A5] text-sm line-clamp-2 group-hover:text-primary transition-colors">{product.name}</p>
               </Link>
             ))

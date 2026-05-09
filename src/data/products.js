@@ -195,7 +195,7 @@ export const products = [
     name: "Denim Jacket",
     description: "Stylish blue denim jacket for casual wear.",
     price: 55.00,
-    image: "https://images.unsplash.com/photo-1576995853123-5a10305d93c0?w=500&q=80",
+    image: "https://images.unsplash.com/photo-1541534741688-6078c6bfb5c5?w=500&q=80",
     category: "Clothing & Wear",
     subCategory: "Men's Wear",
     rating: 4.6,
@@ -208,7 +208,7 @@ export const products = [
     name: "Sports Leggings",
     description: "High-waist compression leggings for workout.",
     price: 25.00,
-    image: "https://images.unsplash.com/photo-1541534741688-6078c6bfb5c5?w=500&q=80",
+    image: "https://images.unsplash.com/photo-1576995853123-5a10305d93c0?w=500&q=80",
     category: "Clothing & Wear",
     subCategory: "Women's Wear",
     rating: 4.7,
@@ -257,7 +257,7 @@ export const products = [
     sales: 5,
     status: "In stock",
   },
-  
+
   // Tools
   {
     id: 13,

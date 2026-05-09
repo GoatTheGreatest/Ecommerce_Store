@@ -40,9 +40,21 @@ const ProductSchema = new mongoose.Schema({
     type: Number,
     default: 0,
   },
+  discountPercent: {
+    type: Number,
+    default: 0,
+  },
+  saleEndDate: {
+    type: Date,
+  },
   status: {
     type: String,
     default: 'In stock',
+  },
+  stock: {
+    type: Number,
+    default: 20,
+    min: [0, 'Stock cannot be negative'],
   },
   // Supplier data managed by Admin
   supplierName: {
@@ -52,6 +64,10 @@ const ProductSchema = new mongoose.Schema({
   supplierRegion: {
     type: String,
     default: 'Germany, Berlin',
+  },
+  sellerName: {
+    type: String,
+    default: 'Guanjoy Trading LLC',
   },
   supplierFlag: {
     type: String,

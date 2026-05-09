@@ -3,14 +3,37 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import { useAuth } from "../../context/AuthContext";
+import { useRouter } from "next/navigation";
+import Loader from "../../components/Loader";
 
 export default function AdminDashboard() {
+  const { user, loading: authLoading } = useAuth();
+  const router = useRouter();
   const [products, setProducts] = useState([]);
+  const [inquiries, setInquiries] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    if (!authLoading && (!user || user.role !== "admin")) {
+      router.push("/");
+    }
+  }, [user, authLoading, router]);
+
+  useEffect(() => {
     fetchProducts();
+    fetchInquiries();
   }, []);
+
+  const fetchInquiries = async () => {
+    try {
+      const res = await fetch("/api/inquiries");
+      const data = await res.json();
+      setInquiries(data);
+    } catch (error) {
+      console.error("Error fetching inquiries:", error);
+    }
+  };
 
   const fetchProducts = async () => {
     try {
@@ -41,16 +64,45 @@ export default function AdminDashboard() {
     }
   };
 
+  if (authLoading || !user || user.role !== "admin") {
+    return <div className="container-custom py-20"><Loader /></div>;
+  }
+
   return (
     <div className="container-custom py-10">
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-3xl font-bold text-[#1C1C1C]">Admin Dashboard</h1>
-        <Link 
-          href="/admin/new" 
-          className="bg-primary text-white px-6 py-2 rounded-lg font-medium hover:bg-blue-700 transition-colors shadow-md"
-        >
-          + Add New Product
-        </Link>
+        <div className="flex gap-4">
+          <Link 
+            href="/admin/messages" 
+            className="bg-white border-2 border-primary text-primary px-6 py-2 rounded-lg font-bold hover:bg-blue-50 transition-all shadow-sm relative"
+          >
+            Messages
+            {inquiries.filter(i => !i.isRead).length > 0 && (
+              <span className="absolute -top-2 -right-2 bg-red-500 text-white text-[10px] w-5 h-5 flex items-center justify-center rounded-full shadow-lg border-2 border-white animate-bounce">
+                {inquiries.filter(i => !i.isRead).length}
+              </span>
+            )}
+          </Link>
+          <Link 
+            href="/admin/history" 
+            className="bg-white border-2 border-primary text-primary px-6 py-2 rounded-lg font-bold hover:bg-blue-50 transition-all shadow-sm"
+          >
+            Sales History
+          </Link>
+          <Link 
+            href="/admin/sales" 
+            className="bg-white border-2 border-primary text-primary px-6 py-2 rounded-lg font-bold hover:bg-blue-50 transition-all shadow-sm"
+          >
+            Manage Sales
+          </Link>
+          <Link 
+            href="/admin/new" 
+            className="bg-primary text-white px-6 py-2 rounded-lg font-bold hover:bg-blue-700 transition-all shadow-md"
+          >
+            + Add New Product
+          </Link>
+        </div>
       </div>
 
       <div className="card overflow-hidden">
@@ -58,6 +110,7 @@ export default function AdminDashboard() {
           <thead className="bg-gray-50 border-b border-gray-200">
             <tr>
               <th className="px-6 py-4 text-sm font-semibold text-[#1C1C1C]">Product</th>
+              <th className="px-6 py-4 text-sm font-semibold text-[#1C1C1C]">Shopkeeper</th>
               <th className="px-6 py-4 text-sm font-semibold text-[#1C1C1C]">Category</th>
               <th className="px-6 py-4 text-sm font-semibold text-[#1C1C1C]">Price</th>
               <th className="px-6 py-4 text-sm font-semibold text-[#1C1C1C]">Status</th>
@@ -92,6 +145,9 @@ export default function AdminDashboard() {
                         <p className="text-xs text-[#8B96A5]">ID: {product._id}</p>
                       </div>
                     </div>
+                  </td>
+                  <td className="px-6 py-4">
+                    <span className="text-sm text-[#505050] font-medium">{product.sellerName || "—"}</span>
                   </td>
                   <td className="px-6 py-4">
                     <span className="text-sm text-[#505050]">{product.category}</span>

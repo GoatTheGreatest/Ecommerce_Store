@@ -4,6 +4,7 @@ import { useState, useEffect, use } from 'react';
 import { useCart } from '../../../context/CartContext';
 import Image from 'next/image';
 import Link from 'next/link';
+import Loader from '../../../components/Loader';
 
 export default function ProductDetail({ params: paramsPromise }) {
   const params = use(paramsPromise);
@@ -36,7 +37,7 @@ export default function ProductDetail({ params: paramsPromise }) {
     fetchData();
   }, [params.id]);
 
-  if (loading) return <div className="container-custom py-20 text-center">Loading product...</div>;
+  if (loading) return <div className="container-custom py-20"><Loader /></div>;
   if (!product) return <div className="container-custom py-20 text-center text-[#EB001B]">Product not found</div>;
 
   return (
@@ -135,10 +136,15 @@ export default function ProductDetail({ params: paramsPromise }) {
           <div className="lg:col-span-3">
             <div className="border border-gray-200 rounded-lg p-4 bg-white shadow-sm">
                <div className="flex items-center gap-3 mb-4 pb-4 border-b border-gray-100">
-                  <div className="w-12 h-12 bg-[#E3F0FF] rounded flex items-center justify-center text-xl font-bold text-primary">S</div>
-                  <div>
-                    <p className="text-[#1C1C1C] font-medium leading-tight">Supplier <br/> Global Trading Co.</p>
-                  </div>
+                   <div className="w-12 h-12 bg-[#E3F0FF] rounded flex items-center justify-center text-xl font-bold text-primary">
+                     {(product.sellerName || "S")[0]}
+                   </div>
+                   <div>
+                     <p className="text-[10px] text-[#8B96A5] font-bold uppercase mb-0.5">Shopkeeper</p>
+                     <p className="text-[#1C1C1C] font-black leading-tight text-lg">
+                        {product.sellerName || "Guanjoy Trading LLC"}
+                     </p>
+                   </div>
                </div>
                <div className="space-y-2 text-[#8B96A5] text-sm mb-4">
                   <div className="flex items-center gap-2">

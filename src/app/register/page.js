@@ -6,11 +6,24 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 
+const countryData = [
+  { name: "Pakistan", code: "+92", length: 10, flag: "🇵🇰" },
+  { name: "USA", code: "+1", length: 10, flag: "🇺🇸" },
+  { name: "UK", code: "+44", length: 10, flag: "🇬🇧" },
+  { name: "India", code: "+91", length: 10, flag: "🇮🇳" },
+  { name: "UAE", code: "+971", length: 9, flag: "🇦🇪" },
+  { name: "Germany", code: "+49", length: 11, flag: "🇩🇪" },
+  { name: "Canada", code: "+1", length: 10, flag: "🇨🇦" },
+];
+
 export default function Register() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [phone, setPhone] = useState("");
+  const [countryIndex, setCountryIndex] = useState(0); // Default Pakistan
   const [agree, setAgree] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
   const [error, setError] = useState("");
   const { register } = useAuth();
   const router = useRouter();
@@ -19,8 +32,15 @@ export default function Register() {
     e.preventDefault();
     setError("");
     
-    if (!name || !email || !password) {
+    if (!name || !email || !password || !phone) {
       setError("Please fill in all fields");
+      return;
+    }
+
+    // Validate phone length
+    const country = countryData[countryIndex];
+    if (phone.length !== country.length) {
+      setError(`Phone number for ${country.name} must be ${country.length} digits long.`);
       return;
     }
 
@@ -29,7 +49,8 @@ export default function Register() {
       return;
     }
 
-    const success = register(name, email, password);
+    const fullPhone = `${country.code} ${phone}`;
+    const success = register(name, email, password, isAdmin ? "admin" : "user", fullPhone);
     if (success) {
       router.push("/");
     } else {
@@ -85,6 +106,31 @@ export default function Register() {
                 onChange={(e) => setEmail(e.target.value)}
               />
             </div>
+            
+            {/* Phone Number Input */}
+            <div>
+              <label className="text-sm font-medium text-[#505050] mb-1 block">Phone Number</label>
+              <div className="flex gap-2">
+                 <select 
+                  value={countryIndex}
+                  onChange={(e) => setCountryIndex(e.target.value)}
+                  className="w-24 px-2 py-3 border border-gray-300 bg-gray-50 text-[#1C1C1C] rounded-lg focus:outline-none focus:ring-2 focus:ring-primary text-sm font-medium"
+                 >
+                    {countryData.map((c, i) => (
+                      <option key={i} value={i}>{c.flag} {c.code}</option>
+                    ))}
+                 </select>
+                 <input
+                  type="tel"
+                  required
+                  className="appearance-none relative block w-full px-4 py-3 border border-gray-300 placeholder-gray-400 text-[#1C1C1C] rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all sm:text-sm"
+                  placeholder={`300 1234567 (${countryData[countryIndex].length} digits)`}
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value.replace(/\D/g, ''))}
+                />
+              </div>
+            </div>
+
             <div>
               <label className="text-sm font-medium text-[#505050] mb-1 block">Password</label>
               <input
@@ -117,6 +163,24 @@ export default function Register() {
             </div>
           </div>
 
+          <div className="flex items-center p-3 bg-gray-50 rounded-lg border border-gray-100">
+            <div className="flex items-center h-5">
+              <input
+                id="is-admin"
+                type="checkbox"
+                className="h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded cursor-pointer"
+                checked={isAdmin}
+                onChange={(e) => setIsAdmin(e.target.checked)}
+              />
+            </div>
+            <div className="ml-3 text-sm">
+              <label htmlFor="is-admin" className="text-[#1C1C1C] font-bold cursor-pointer">
+                Register as Admin
+              </label>
+              <p className="text-[10px] text-[#8B96A5]">Grants access to product management</p>
+            </div>
+          </div>
+
           <div>
             <button
               type="submit"
@@ -137,11 +201,11 @@ export default function Register() {
 
           <div className="grid grid-cols-2 gap-3">
              <button type="button" className="flex items-center justify-center px-4 py-2 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors font-medium text-sm text-[#505050]">
-                <Image src="https://www.svgrepo.com/show/355037/google.svg" alt="Google" width={20} height={20} className="mr-2" />
+                <Image src="https://www.svgrepo.com/show/355037/google.svg" alt="Google" width={20} height={20} className="mr-2" unoptimized />
                 Google
              </button>
              <button type="button" className="flex items-center justify-center px-4 py-2 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors font-medium text-sm text-[#505050]">
-                <Image src="https://www.svgrepo.com/show/353733/facebook.svg" alt="Facebook" width={20} height={20} className="mr-2" />
+                <Image src="https://upload.wikimedia.org/wikipedia/commons/b/b8/2021_Facebook_icon.svg" alt="Facebook" width={20} height={20} className="mr-2" unoptimized />
                 Facebook
              </button>
           </div>

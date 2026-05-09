@@ -2,8 +2,14 @@
 
 import Link from "next/link";
 import Image from "next/image";
+import { usePathname } from "next/navigation";
 
 export default function Footer() {
+  const pathname = usePathname();
+
+  // Hide footer on login and register pages
+  if (pathname === "/login" || pathname === "/register") return null;
+
   return (
     <footer className="bg-white border-t border-gray-200 pt-10 pb-6 mt-10">
       <div className="container-custom">
