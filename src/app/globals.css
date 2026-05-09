@@ -81,3 +81,12 @@ body {
 .btn-outline:hover {
   background: var(--gray-100);
 }
+
+@keyframes progress-shrink {
+  from { width: 100%; }
+  to { width: 0%; }
+}
+
+.animate-progress-shrink {
+  animation: progress-shrink 3s linear forwards;
+}

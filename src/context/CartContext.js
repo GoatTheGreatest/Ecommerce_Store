@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useReducer } from "react";
+import { createContext, useContext, useReducer, useState, useEffect } from "react";
 
 const CartContext = createContext();
 
@@ -45,10 +45,29 @@ const cartReducer = (state, action) => {
 
 export const CartProvider = ({ children }) => {
   const [state, dispatch] = useReducer(cartReducer, { items: [] });
+  const [toast, setToast] = useState({ show: false, message: "" });
 
   const addToCart = (product) => {
     dispatch({ type: "ADD_TO_CART", payload: product });
+    showToast("Item added to the cart");
   };
+
+  const showToast = (message) => {
+    setToast({ show: true, message });
+  };
+
+  const hideToast = () => {
+    setToast({ show: false, message: "" });
+  };
+
+  useEffect(() => {
+    if (toast.show) {
+      const timer = setTimeout(() => {
+        hideToast();
+      }, 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [toast.show]);
 
   const removeFromCart = (id) => {
     dispatch({ type: "REMOVE_FROM_CART", payload: id });
@@ -67,7 +86,15 @@ export const CartProvider = ({ children }) => {
 
   return (
     <CartContext.Provider
-      value={{ ...state, addToCart, removeFromCart, updateQuantity, getTotal }}
+      value={{ 
+        ...state, 
+        addToCart, 
+        removeFromCart, 
+        updateQuantity, 
+        getTotal,
+        toast,
+        hideToast
+      }}
     >
       {children}
     </CartContext.Provider>

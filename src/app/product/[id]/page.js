@@ -46,11 +46,9 @@ export default function ProductDetail({ params: paramsPromise }) {
         <div className="flex items-center gap-2 text-[#8B96A5] text-sm mb-5">
           <Link href="/">Home</Link>
           <span>›</span>
-          <Link href="/products">Clothings</Link>
+          <Link href="/products">{product.category}</Link>
           <span>›</span>
-          <Link href="/products">Men&apos;s wear</Link>
-          <span>›</span>
-          <span className="text-foreground">Summer clothing</span>
+          <span className="text-foreground">{product.name}</span>
         </div>
 
         {/* Main Product Section */}
@@ -83,52 +81,52 @@ export default function ProductDetail({ params: paramsPromise }) {
             
             <div className="flex items-center gap-4 mb-4">
                <div className="flex text-orange-400">
-                  {[1,2,3,4,5].map(s => <span key={s}>★</span>)}
+                  {[1,2,3,4,5].map(s => <span key={s}>{s <= Math.floor(product.rating) ? "★" : "☆"}</span>)}
                </div>
-               <span className="text-orange-400">{product.rating}</span>
-               <span className="text-gray-400">•</span>
+               <span className="text-orange-400 font-medium">{product.rating}</span>
+               <span className="text-gray-300">•</span>
                <span className="text-[#8B96A5] flex items-center gap-1">
                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
                  {product.reviews} reviews
                </span>
-               <span className="text-gray-400">•</span>
+               <span className="text-gray-300">•</span>
                <span className="text-[#8B96A5] flex items-center gap-1">
                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/></svg>
                  {product.sales} sold
                </span>
             </div>
 
-            <div className="bg-[#FFF0DF] p-4 flex gap-10 mb-6">
+            <div className="bg-[#FFF0DF] p-4 flex gap-10 mb-6 rounded">
                <div>
                   <p className="text-[#EB001B] text-xl font-bold">${product.price}</p>
-                  <p className="text-xs text-[#505050]">50-100 pcs</p>
+                  <p className="text-xs text-[#505050]">1-10 pcs</p>
                </div>
                <div className="border-l border-gray-300 pl-10">
-                  <p className="text-[#1C1C1C] text-xl font-bold">$90.00</p>
-                  <p className="text-xs text-[#505050]">100-700 pcs</p>
+                  <p className="text-[#1C1C1C] text-xl font-bold">${(product.price * 0.9).toFixed(2)}</p>
+                  <p className="text-xs text-[#505050]">10-50 pcs</p>
                </div>
                <div className="border-l border-gray-300 pl-10">
-                  <p className="text-[#1C1C1C] text-xl font-bold">$78.00</p>
-                  <p className="text-xs text-[#505050]">700+ pcs</p>
+                  <p className="text-[#1C1C1C] text-xl font-bold">${(product.price * 0.8).toFixed(2)}</p>
+                  <p className="text-xs text-[#505050]">50+ pcs</p>
                </div>
             </div>
 
-            <div className="space-y-3 text-sm">
-               <div className="flex gap-20 border-b border-gray-200 pb-2">
-                 <span className="text-[#8B96A5] w-20">Price:</span>
-                 <span className="text-[#505050]">Negotiable</span>
+            <div className="space-y-3 text-sm text-[#505050]">
+               <div className="flex border-b border-gray-100 pb-2">
+                 <span className="text-[#8B96A5] w-32">Price:</span>
+                 <span>Negotiable</span>
                </div>
-               <div className="flex gap-20 border-b border-gray-200 pb-2">
-                 <span className="text-[#8B96A5] w-20">Type:</span>
-                 <span className="text-[#505050]">Classic shoes</span>
+               <div className="flex border-b border-gray-100 pb-2">
+                 <span className="text-[#8B96A5] w-32">Category:</span>
+                 <span>{product.category}</span>
                </div>
-               <div className="flex gap-20 border-b border-gray-200 pb-2">
-                 <span className="text-[#8B96A5] w-20">Material:</span>
-                 <span className="text-[#505050]">Plastic material</span>
+               <div className="flex border-b border-gray-100 pb-2">
+                 <span className="text-[#8B96A5] w-32">Subcategory:</span>
+                 <span>{product.subCategory}</span>
                </div>
-               <div className="flex gap-20 border-b border-gray-200 pb-2">
-                 <span className="text-[#8B96A5] w-20">Design:</span>
-                 <span className="text-[#505050]">Modern nice</span>
+               <div className="flex border-b border-gray-100 pb-2">
+                 <span className="text-[#8B96A5] w-32">Status:</span>
+                 <span className="text-green-600 font-medium">{product.status}</span>
                </div>
             </div>
           </div>
@@ -137,15 +135,15 @@ export default function ProductDetail({ params: paramsPromise }) {
           <div className="lg:col-span-3">
             <div className="border border-gray-200 rounded-lg p-4 bg-white shadow-sm">
                <div className="flex items-center gap-3 mb-4 pb-4 border-b border-gray-100">
-                  <div className="w-12 h-12 bg-[#E3F0FF] rounded flex items-center justify-center text-xl font-bold text-primary">R</div>
+                  <div className="w-12 h-12 bg-[#E3F0FF] rounded flex items-center justify-center text-xl font-bold text-primary">S</div>
                   <div>
-                    <p className="text-[#1C1C1C] font-medium leading-tight">Supplier <br/> {product.supplierName}</p>
+                    <p className="text-[#1C1C1C] font-medium leading-tight">Supplier <br/> Global Trading Co.</p>
                   </div>
                </div>
                <div className="space-y-2 text-[#8B96A5] text-sm mb-4">
                   <div className="flex items-center gap-2">
-                    <span className="text-lg">{product.supplierFlag}</span>
-                    <span>{product.supplierRegion}</span>
+                    <span className="text-lg">🇩🇪</span>
+                    <span>Germany, Berlin</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
@@ -156,10 +154,18 @@ export default function ProductDetail({ params: paramsPromise }) {
                     <span>Worldwide shipping</span>
                   </div>
                </div>
-               <button className="w-full btn-primary mb-2 text-sm">Send inquiry</button>
+               
+               <button 
+                onClick={() => addToCart(product)}
+                className="w-full bg-primary text-white py-2 rounded-lg font-bold mb-2 flex items-center justify-center gap-2 hover:bg-blue-700 transition-colors shadow-sm"
+               >
+                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg>
+                 Add to cart
+               </button>
+               <button className="w-full btn-outline text-sm mb-2">Send inquiry</button>
                <button className="w-full btn-outline text-sm">Seller&apos;s profile</button>
             </div>
-            <button className="w-full mt-4 flex items-center justify-center gap-2 text-primary font-medium">
+            <button className="w-full mt-4 flex items-center justify-center gap-2 text-primary font-medium hover:text-blue-700 transition-colors">
                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.505 4.044 3 5.5L12 21Z"/></svg>
                Save for later
             </button>
@@ -179,12 +185,12 @@ export default function ProductDetail({ params: paramsPromise }) {
                 </div>
                 <div className="p-6 text-[#505050] space-y-4">
                    <p>{product.description}</p>
-                   <p>Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.</p>
+                   <p>This premium product is designed for high performance and durability. Whether you are using it for personal or professional use, it offers unmatched quality in its category.</p>
                    <table className="w-full max-w-md border-collapse border border-gray-200 text-sm">
                       <tbody>
-                        <tr><td className="border border-gray-200 p-2 bg-gray-50 w-1/3">Model</td><td className="border border-gray-200 p-2">#8786867</td></tr>
-                        <tr><td className="border border-gray-200 p-2 bg-gray-50">Style</td><td className="border border-gray-200 p-2">Classic style</td></tr>
-                        <tr><td className="border border-gray-200 p-2 bg-gray-50">Certificate</td><td className="border border-gray-200 p-2">ISO-898921212</td></tr>
+                        <tr><td className="border border-gray-200 p-2 bg-gray-50 w-1/3">Model</td><td className="border border-gray-200 p-2">#{product._id.substring(18)}</td></tr>
+                        <tr><td className="border border-gray-200 p-2 bg-gray-50">Category</td><td className="border border-gray-200 p-2">{product.category}</td></tr>
+                        <tr><td className="border border-gray-200 p-2 bg-gray-50">Subcategory</td><td className="border border-gray-200 p-2">{product.subCategory}</td></tr>
                       </tbody>
                    </table>
                 </div>
@@ -200,8 +206,8 @@ export default function ProductDetail({ params: paramsPromise }) {
                             <Image src={p.image} alt={p.name} fill sizes="64px" className="object-contain p-1" />
                          </div>
                          <div>
-                            <p className="text-sm text-[#1C1C1C] line-clamp-1 group-hover:text-primary">{p.name}</p>
-                            <p className="text-sm text-[#8B96A5]">${p.price} - $90.00</p>
+                            <p className="text-sm text-[#1C1C1C] line-clamp-1 group-hover:text-primary font-medium">{p.name}</p>
+                            <p className="text-sm text-[#8B96A5]">${p.price}</p>
                          </div>
                       </Link>
                     ))}
@@ -219,21 +225,12 @@ export default function ProductDetail({ params: paramsPromise }) {
                     <div className="relative aspect-square mb-3">
                        <Image src={p.image} alt={p.name} fill sizes="(max-width: 768px) 50vw, 16vw" className="object-contain" />
                     </div>
-                    <p className="text-sm text-[#505050] line-clamp-1 mb-1">{p.name}</p>
-                    <p className="text-sm text-[#8B96A5]">${p.price} - $90.00</p>
+                    <p className="text-sm text-[#505050] line-clamp-1 mb-1 font-medium">{p.name}</p>
+                    <p className="text-sm text-[#8B96A5]">${p.price}</p>
                  </Link>
                ))}
            </div>
         </section>
-
-        {/* CTA Banner */}
-        <div className="bg-[#237CFF] rounded-lg p-8 mt-10 flex flex-col md:flex-row justify-between items-center text-white gap-6">
-           <div>
-             <h3 className="text-xl font-bold">Super discount on more than 100 USD</h3>
-             <p className="text-white/80">Have you ever finally just write dummy info</p>
-           </div>
-           <button className="bg-[#FF9017] text-white px-6 py-2 rounded-lg font-medium hover:bg-orange-600 transition-colors">Shop now</button>
-        </div>
       </div>
     </div>
   );

@@ -4,6 +4,7 @@ import { useState, useEffect, Suspense } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
+import { useCart } from "../../context/CartContext";
 
 function ProductsContent() {
   const [viewMode, setViewMode] = useState("grid");
@@ -11,6 +12,7 @@ function ProductsContent() {
   const [loading, setLoading] = useState(true);
   const searchParams = useSearchParams();
   const categoryFilter = searchParams.get("category");
+  const { addToCart } = useCart();
 
   useEffect(() => {
     async function fetchProducts() {
@@ -156,8 +158,8 @@ function ProductsContent() {
               ) : products.length === 0 ? (
                 <div className="col-span-full py-20 text-center text-[#8B96A5]">No products found in this category.</div>
               ) : products.map((product) => (
-                <div key={product._id} className={`card p-4 hover:shadow-md transition-shadow ${viewMode === "list" ? "flex gap-5" : ""}`}>
-                  <Link href={`/product/${product._id}`} className={`relative block ${viewMode === "list" ? "w-48 aspect-square" : "w-full aspect-square mb-4"}`}>
+                <div key={product._id} className={`card p-4 hover:shadow-md transition-shadow flex flex-col ${viewMode === "list" ? "md:flex-row gap-5" : ""}`}>
+                  <Link href={`/product/${product._id}`} className={`relative block flex-shrink-0 ${viewMode === "list" ? "w-full md:w-48 aspect-square" : "w-full aspect-square mb-4"}`}>
                     <Image 
                       src={product.image || "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=500&q=80"} 
                       alt={product.name} 
@@ -166,7 +168,7 @@ function ProductsContent() {
                       className="object-contain" 
                     />
                   </Link>
-                  <div className="flex-1">
+                  <div className="flex-1 flex flex-col">
                     <div className="flex justify-between items-start mb-2">
                       <div>
                         <div className="flex items-center gap-2 mb-1">
@@ -174,18 +176,31 @@ function ProductsContent() {
                           {product.oldPrice && <span className="text-[#8B96A5] text-sm line-through">${product.oldPrice}</span>}
                         </div>
                         <div className="flex items-center gap-1 mb-2">
-                          <div className="flex text-orange-400">
-                             {[1,2,3,4,5].map(s => <span key={s}>★</span>)}
+                          <div className="flex text-orange-400 text-xs">
+                             {[1,2,3,4,5].map(s => <span key={s}>{s <= Math.floor(product.rating) ? "★" : "☆"}</span>)}
                           </div>
-                          <span className="text-orange-400 text-sm">{product.rating}</span>
+                          <span className="text-orange-400 text-xs">{product.rating}</span>
                         </div>
                       </div>
-                      <button className="text-primary p-2 border border-gray-200 rounded hover:bg-gray-50">
+                      <button className="text-[#8B96A5] p-2 border border-gray-200 rounded hover:text-primary hover:bg-blue-50 transition-colors">
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.505 4.044 3 5.5L12 21Z"/></svg>
                       </button>
                     </div>
-                    <Link href={`/product/${product._id}`} className="text-[#505050] hover:text-primary block mb-2">{product.name}</Link>
-                    {viewMode === "list" && <p className="text-[#8B96A5] text-sm mb-4">{product.description}</p>}
+                    <Link href={`/product/${product._id}`} className="text-[#505050] hover:text-primary block mb-2 font-medium line-clamp-2">{product.name}</Link>
+                    {viewMode === "list" && <p className="text-[#8B96A5] text-sm mb-4 line-clamp-3">{product.description}</p>}
+                    
+                    <div className="mt-auto pt-4">
+                      <button 
+                        onClick={(e) => {
+                          e.preventDefault();
+                          addToCart(product);
+                        }}
+                        className="w-full bg-primary text-white py-2 rounded flex items-center justify-center gap-2 text-sm font-medium hover:bg-blue-700 transition-colors"
+                      >
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg>
+                        Add to cart
+                      </button>
+                    </div>
                   </div>
                 </div>
               ))}
