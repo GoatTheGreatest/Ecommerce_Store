@@ -28,15 +28,15 @@ export default function Home() {
     fetchData();
   }, []);
 
-  // Fallback static items - Matching the reference image content as closely as possible
+  // Fallback static items - Matching the reference image content as closely as possible with VERIFIED IDs
   const staticHomeItems = [
-    { name: "Soft chairs", price: 19, image: "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=200&q=80", sub: "Furniture" },
+    { name: "Soft chairs", price: 19, image: "https://images.unsplash.com/photo-1592078615290-033ee584e267?w=200&q=80", sub: "Furniture" },
     { name: "Sofa & chair", price: 19, image: "https://images.unsplash.com/photo-1534073828943-f801091bb18c?w=200&q=80", sub: "Furniture" }, // Table lamp
-    { name: "Kitchen dishes", price: 19, image: "https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=200&q=80", sub: "Kitchen" }, // Bed/Mattress
+    { name: "Kitchen dishes", price: 19, image: "https://images.unsplash.com/photo-1616627547584-bf28cee262db?w=200&q=80", sub: "Kitchen" }, // Blue Mattress/Box
     { name: "Smart watches", price: 19, image: "https://images.unsplash.com/photo-1590523277543-a94d2e4eb00b?w=200&q=80", sub: "Gadgets" }, // Brown pot
-    { name: "Kitchen mixer", price: 100, image: "https://images.unsplash.com/photo-1585533880150-10489b486211?w=200&q=80", sub: "Kitchen" }, // Meat grinder
+    { name: "Kitchen mixer", price: 100, image: "https://images.unsplash.com/photo-1585533880150-10489b486211?w=200&q=80", sub: "Kitchen" }, // Mixer machine
     { name: "Blenders", price: 39, image: "https://images.unsplash.com/photo-1570222094114-d054a817e56b?w=200&q=80", sub: "Appliances" }, // Coffee machine
-    { name: "Home appliance", price: 19, image: "https://images.unsplash.com/photo-1584622650111-993a426fbf0a?w=200&q=80", sub: "Appliances" }, // Storage/Organizer
+    { name: "Home appliance", price: 19, image: "https://images.unsplash.com/photo-1584622650111-993a426fbf0a?w=200&q=80", sub: "Appliances" }, // Organizer
     { name: "Coffee maker", price: 10, image: "https://images.unsplash.com/photo-1512428559083-a400a4b82c9a?w=200&q=80", sub: "Appliances" }, // Potted plant
   ];
 
@@ -47,17 +47,22 @@ export default function Home() {
     { name: "Smart watches", price: 90, image: "https://images.unsplash.com/photo-1585232004423-244e0e6904e3?w=200&q=80", sub: "Gadgets" }, // Kettle
     { name: "Gaming set", price: 35, image: "https://images.unsplash.com/photo-1542751371-adc38448a05e?w=200&q=80", sub: "Gadgets" },
     { name: "Laptops & PC", price: 340, image: "https://images.unsplash.com/photo-1517336714731-489689fd1ca8?w=200&q=80", sub: "Laptops" },
-    { name: "Smartphones", price: 19, image: "https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=200&q=80", sub: "Gadgets" }, // Tablet
-    { name: "Electric kattle", price: 240, image: "https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=200&q=80", sub: "Appliances" }, // Phone
+    { name: "Smartphones", price: 19, image: "https://images.unsplash.com/photo-1512499617640-c74ae3a79d37?w=200&q=80", sub: "Gadgets" }, // Tablet/Phone
+    { name: "Electric kattle", price: 240, image: "https://images.unsplash.com/photo-1592890288564-76628a30a657?w=200&q=80", sub: "Appliances" }, // Red Phone
   ];
 
   const displayProducts = Array.isArray(products) && products.length > 0 ? products : [];
   
-  const dbHomeItems = Array.isArray(products) ? products.filter(p => p.category === "Home & Outdoor").slice(0, 8) : [];
-  const dbTechItems = Array.isArray(products) ? products.filter(p => p.category === "Electronics").slice(0, 8) : [];
+  const getItems = (cat) => {
+    const dbItems = Array.isArray(products) ? products.filter(p => p.category === cat).slice(0, 8) : [];
+    if (dbItems.length > 0) return dbItems;
+    return [];
+  };
 
-  const homeItems = dbHomeItems.length > 0 ? dbHomeItems : staticHomeItems;
-  const techItems = dbTechItems.length > 0 ? dbTechItems : staticTechItems;
+  const homeItems = getItems("Home & Outdoor").length > 0 ? getItems("Home & Outdoor") : staticHomeItems;
+  const techItems = getItems("Electronics").length > 0 ? getItems("Electronics") : staticTechItems;
+  const clothingItems = getItems("Clothing & Wear");
+  const accessoryItems = getItems("Accessories");
 
   if (loading) {
     return <div className="container-custom py-20 text-center text-[#8B96A5]">Loading...</div>;
@@ -82,7 +87,7 @@ export default function Home() {
             ].map((cat, i) => (
               <li key={i}>
                 <Link 
-                  href={`/products?category=${cat.slug}`}
+                  href={`/products?category=${encodeURIComponent(cat.slug)}`}
                   className={`block px-3 py-2 rounded-lg cursor-pointer hover:bg-gray-100 ${i === 0 ? "bg-[#E3F0FF] text-foreground font-semibold" : ""}`}
                 >
                   {cat.name}
@@ -118,6 +123,14 @@ export default function Home() {
       {/* Category Sections */}
       <CategorySection title="Home and outdoor" image="https://images.unsplash.com/photo-1493663284031-b7e3aefcae8e?w=500&q=80" items={homeItems} categoryName="Home & Outdoor" />
       <CategorySection title="Consumer electronics and gadgets" image="https://images.unsplash.com/photo-1550009158-9ebf69173e03?w=500&q=80" items={techItems} categoryName="Electronics" />
+      
+      {clothingItems.length > 0 && (
+        <CategorySection title="Clothing and wear" image="https://images.unsplash.com/photo-1489987707025-afc232f7ea0f?w=500&q=80" items={clothingItems} categoryName="Clothing & Wear" />
+      )}
+      
+      {accessoryItems.length > 0 && (
+        <CategorySection title="Personal accessories" image="https://images.unsplash.com/photo-1511499767390-90342f568952?w=500&q=80" items={accessoryItems} categoryName="Accessories" />
+      )}
 
       {/* Inquiry Form */}
       <section className="relative rounded-lg overflow-hidden h-[420px]">
@@ -141,7 +154,7 @@ export default function Home() {
       <section>
         <h3 className="text-2xl font-bold mb-6 text-[#1C1C1C]">Recommended items</h3>
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-5">
-          {displayProducts.slice(0, 10).map((product) => (
+          {displayProducts.slice(0, 15).map((product) => (
             <Link href={`/product/${product._id}`} key={product._id} className="card p-4 hover:shadow-md transition-shadow">
               <div className="relative w-full aspect-square mb-4">
                 <Image src={product.image || "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=200&q=80"} alt={product.name} fill sizes="(max-width: 768px) 50vw, 20vw" className="object-contain" />
@@ -150,16 +163,6 @@ export default function Home() {
               <p className="text-[#8B96A5] text-sm line-clamp-2">{product.name}</p>
             </Link>
           ))}
-        </div>
-      </section>
-
-      {/* Newsletter */}
-      <section className="bg-[#EFF2F4] p-10 rounded-lg text-center mt-10">
-        <h3 className="text-2xl font-bold text-[#1C1C1C] mb-2">Subscribe on our newsletter</h3>
-        <p className="text-[#606060] mb-6">Get daily news on upcoming offers</p>
-        <div className="flex flex-col sm:flex-row justify-center gap-2 max-w-md mx-auto">
-          <input type="email" placeholder="Email" className="flex-1 p-2 border border-gray-300 rounded outline-none" />
-          <button className="bg-primary text-white px-6 py-2 rounded-lg font-medium hover:bg-blue-700">Subscribe</button>
         </div>
       </section>
     </div>

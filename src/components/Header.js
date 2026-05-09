@@ -73,7 +73,6 @@ export default function Header() {
             </div>
             <Link href="/" className="hover:text-primary">Hot offers</Link>
             <Link href="/products" className="hover:text-primary">Gift boxes</Link>
-            <Link href="/projects" className="hover:text-primary">Projects</Link>
             <Link href="/menu" className="hover:text-primary">Menu item</Link>
             <div className="flex items-center gap-1 cursor-pointer hover:text-primary">
               <span>Help</span>

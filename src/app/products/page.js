@@ -56,10 +56,10 @@ function ProductsContent() {
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="m18 15-6-6-6 6"/></svg>
               </div>
               <ul className="text-[#505050] space-y-2 text-sm">
-                <li><Link href="/products?category=Electronics" className="hover:text-primary">Electronics</Link></li>
-                <li><Link href="/products?category=Home & Outdoor" className="hover:text-primary">Home & Outdoor</Link></li>
-                <li><Link href="/products?category=Clothing & Wear" className="hover:text-primary">Clothing & Wear</Link></li>
-                <li><Link href="/products?category=Accessories" className="hover:text-primary">Accessories</Link></li>
+                <li><Link href={`/products?category=${encodeURIComponent("Electronics")}`} className="hover:text-primary">Electronics</Link></li>
+                <li><Link href={`/products?category=${encodeURIComponent("Home & Outdoor")}`} className="hover:text-primary">Home & Outdoor</Link></li>
+                <li><Link href={`/products?category=${encodeURIComponent("Clothing & Wear")}`} className="hover:text-primary">Clothing & Wear</Link></li>
+                <li><Link href={`/products?category=${encodeURIComponent("Accessories")}`} className="hover:text-primary">Accessories</Link></li>
                 <li><Link href="/products" className="text-primary font-medium">All Categories</Link></li>
               </ul>
             </div>
