@@ -1,26 +1,83 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #F7FAFC;
+  --foreground: #1C1C1C;
+  --primary: #0D6EFD;
+  --secondary: #8B96A5;
+  --border: #E3E8EE;
+  --gray-100: #F7FAFC;
+  --gray-200: #E3E8EE;
+  --gray-300: #DEE2E7;
+  --gray-400: #BDC4CD;
+  --gray-500: #8B96A5;
+  --gray-600: #505050;
+  --orange: #FF9017;
+  --green: #00B517;
+  --blue-light: #E3F0FF;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --color-primary: var(--primary);
+  --color-secondary: var(--secondary);
+  --color-border-base: var(--border);
+  --color-gray-100: var(--gray-100);
+  --color-gray-200: var(--gray-200);
+  --color-gray-300: var(--gray-300);
+  --color-gray-400: var(--gray-400);
+  --color-gray-500: var(--gray-500);
+  --color-gray-600: var(--gray-600);
+  --color-orange-base: var(--orange);
+  --color-green-base: var(--green);
+  --color-blue-light: var(--blue-light);
+  --font-sans: 'Inter', sans-serif;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: 'Inter', sans-serif;
+}
+
+.container-custom {
+  max-width: 1180px;
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: 1rem;
+  padding-right: 1rem;
+}
+
+.card {
+  background: white;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+}
+
+.btn-primary {
+  background: var(--primary);
+  color: white;
+  padding: 10px 18px;
+  border-radius: 6px;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+
+.btn-primary:hover {
+  background: #0056b3;
+}
+
+.btn-outline {
+  border: 1px solid var(--border);
+  background: white;
+  color: var(--primary);
+  padding: 10px 18px;
+  border-radius: 6px;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+
+.btn-outline:hover {
+  background: var(--gray-100);
 }
