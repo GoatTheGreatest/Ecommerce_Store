@@ -35,6 +35,7 @@ export async function GET() {
       count: seededProducts.length 
     });
   } catch (error) {
+    console.error("Seeding error:", error);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }

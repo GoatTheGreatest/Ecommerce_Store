@@ -48,6 +48,7 @@ export const products = [
     description: "Action camera for extreme sports and travel.",
     price: 299.50,
     oldPrice: 350.00,
+    image: "https://images.unsplash.com/photo-1502920917128-1aa500764cbd?w=500&q=80",
     category: "Electronics",
     subCategory: "Cameras",
     rating: 4.6,

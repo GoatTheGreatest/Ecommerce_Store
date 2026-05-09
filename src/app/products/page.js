@@ -1,18 +1,25 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 
-export default function Products() {
+function ProductsContent() {
   const [viewMode, setViewMode] = useState("grid");
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const searchParams = useSearchParams();
+  const categoryFilter = searchParams.get("category");
 
   useEffect(() => {
     async function fetchProducts() {
+      setLoading(true);
       try {
-        const res = await fetch("/api/products");
+        const url = categoryFilter 
+          ? `/api/products?category=${encodeURIComponent(categoryFilter)}` 
+          : "/api/products";
+        const res = await fetch(url);
         const data = await res.json();
         setProducts(data);
       } catch (error) {
@@ -22,7 +29,7 @@ export default function Products() {
       }
     }
     fetchProducts();
-  }, []);
+  }, [categoryFilter]);
 
   return (
     <div className="bg-[#F7FAFC] min-h-screen pb-10">
@@ -31,11 +38,13 @@ export default function Products() {
         <div className="flex items-center gap-2 text-[#8B96A5] text-sm mb-5">
           <Link href="/">Home</Link>
           <span>›</span>
-          <Link href="/products">Clothings</Link>
-          <span>›</span>
-          <Link href="/products">Men&apos;s wear</Link>
-          <span>›</span>
-          <span className="text-foreground">Summer clothing</span>
+          <Link href="/products">Products</Link>
+          {categoryFilter && (
+            <>
+              <span>›</span>
+              <span className="text-foreground">{categoryFilter}</span>
+            </>
+          )}
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
@@ -47,11 +56,11 @@ export default function Products() {
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="m18 15-6-6-6 6"/></svg>
               </div>
               <ul className="text-[#505050] space-y-2 text-sm">
-                <li><Link href="#" className="hover:text-primary">Mobile accessory</Link></li>
-                <li><Link href="#" className="hover:text-primary">Electronics</Link></li>
-                <li><Link href="#" className="hover:text-primary">Smartphones</Link></li>
-                <li><Link href="#" className="hover:text-primary">Modern tech</Link></li>
-                <li className="text-primary cursor-pointer">See all</li>
+                <li><Link href="/products?category=Electronics" className="hover:text-primary">Electronics</Link></li>
+                <li><Link href="/products?category=Home & Outdoor" className="hover:text-primary">Home & Outdoor</Link></li>
+                <li><Link href="/products?category=Clothing & Wear" className="hover:text-primary">Clothing & Wear</Link></li>
+                <li><Link href="/products?category=Accessories" className="hover:text-primary">Accessories</Link></li>
+                <li><Link href="/products" className="text-primary font-medium">All Categories</Link></li>
               </ul>
             </div>
 
@@ -99,8 +108,8 @@ export default function Products() {
             {/* Top Bar */}
             <div className="card p-4 flex flex-col md:flex-row justify-between items-center gap-4 mb-4">
               <div className="text-[#1C1C1C]">
-                <span>12,911 items in </span>
-                <span className="font-bold">Mobile accessory</span>
+                <span>{products.length} items in </span>
+                <span className="font-bold">{categoryFilter || "All categories"}</span>
               </div>
               <div className="flex items-center gap-4">
                 <label className="flex items-center gap-2 text-sm text-[#1C1C1C]">
@@ -130,22 +139,22 @@ export default function Products() {
             </div>
 
             {/* Active Filters */}
-            <div className="flex flex-wrap gap-2 mb-4">
-               {["Samsung", "Apple", "Poco", "Metallic", "4 star", "3 star"].map((tag) => (
-                 <div key={tag} className="border border-primary text-[#1C1C1C] px-3 py-1 rounded flex items-center gap-2 text-sm bg-white">
-                   <span>{tag}</span>
-                   <span className="text-gray-400 cursor-pointer">×</span>
+            {categoryFilter && (
+              <div className="flex flex-wrap gap-2 mb-4">
+                 <div className="border border-primary text-[#1C1C1C] px-3 py-1 rounded flex items-center gap-2 text-sm bg-white">
+                   <span>{categoryFilter}</span>
+                   <Link href="/products" className="text-gray-400 hover:text-red-500">×</Link>
                  </div>
-               ))}
-               <button className="text-primary text-sm font-medium ml-2">Clear all filter</button>
-            </div>
+                 <Link href="/products" className="text-primary text-sm font-medium ml-2">Clear all filter</Link>
+              </div>
+            )}
 
             {/* Product Grid */}
             <div className={viewMode === "grid" ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4" : "space-y-4"}>
               {loading ? (
                 <div className="col-span-full py-20 text-center text-[#8B96A5]">Loading products...</div>
               ) : products.length === 0 ? (
-                <div className="col-span-full py-20 text-center text-[#8B96A5]">No products found.</div>
+                <div className="col-span-full py-20 text-center text-[#8B96A5]">No products found in this category.</div>
               ) : products.map((product) => (
                 <div key={product._id} className={`card p-4 hover:shadow-md transition-shadow ${viewMode === "list" ? "flex gap-5" : ""}`}>
                   <Link href={`/product/${product._id}`} className={`relative block ${viewMode === "list" ? "w-48 aspect-square" : "w-full aspect-square mb-4"}`}>
@@ -201,5 +210,13 @@ export default function Products() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function Products() {
+  return (
+    <Suspense fallback={<div className="container-custom py-20 text-center">Loading...</div>}>
+      <ProductsContent />
+    </Suspense>
   );
 }
