@@ -11,7 +11,6 @@ export default function AdminDashboard() {
   const { user, loading: authLoading } = useAuth();
   const router = useRouter();
   const [products, setProducts] = useState([]);
-  const [inquiries, setInquiries] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -22,18 +21,9 @@ export default function AdminDashboard() {
 
   useEffect(() => {
     fetchProducts();
-    fetchInquiries();
   }, []);
 
-  const fetchInquiries = async () => {
-    try {
-      const res = await fetch("/api/inquiries");
-      const data = await res.json();
-      setInquiries(data);
-    } catch (error) {
-      console.error("Error fetching inquiries:", error);
-    }
-  };
+
 
   const fetchProducts = async () => {
     try {
@@ -73,17 +63,7 @@ export default function AdminDashboard() {
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-3xl font-bold text-[#1C1C1C]">Admin Dashboard</h1>
         <div className="flex gap-4">
-          <Link 
-            href="/admin/messages" 
-            className="bg-white border-2 border-primary text-primary px-6 py-2 rounded-lg font-bold hover:bg-blue-50 transition-all shadow-sm relative"
-          >
-            Messages
-            {inquiries.filter(i => !i.isRead).length > 0 && (
-              <span className="absolute -top-2 -right-2 bg-red-500 text-white text-[10px] w-5 h-5 flex items-center justify-center rounded-full shadow-lg border-2 border-white animate-bounce">
-                {inquiries.filter(i => !i.isRead).length}
-              </span>
-            )}
-          </Link>
+
           <Link 
             href="/admin/history" 
             className="bg-white border-2 border-primary text-primary px-6 py-2 rounded-lg font-bold hover:bg-blue-50 transition-all shadow-sm"

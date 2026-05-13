@@ -18,21 +18,25 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   const login = (email, password) => {
+    const correctRole = email.toLowerCase().includes("admin") ? "admin" : "user";
     const savedUser = localStorage.getItem("user");
     if (savedUser) {
       const parsed = JSON.parse(savedUser);
       if (parsed.email === email) {
-        setUser(parsed);
+        // Always re-apply the correct role based on email
+        const updated = { ...parsed, role: correctRole };
+        setUser(updated);
+        localStorage.setItem("user", JSON.stringify(updated));
         return true;
       }
     }
-    
+
     const mockUser = {
       id: "1",
       name: email.split("@")[0],
       email: email,
-      phone: "+92 300 1234567", // Default mock phone
-      role: email.includes("admin") ? "admin" : "user",
+      phone: "+92 300 1234567",
+      role: correctRole,
       avatar: "",
       dob: "",
       gender: "",

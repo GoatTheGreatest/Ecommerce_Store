@@ -1,5 +1,11 @@
 import mongoose from 'mongoose';
 
+const ReplySchema = new mongoose.Schema({
+  sender: { type: String, enum: ['admin', 'user'], required: true },
+  text: { type: String, required: true },
+  senderName: { type: String, required: true },
+}, { timestamps: true });
+
 const InquirySchema = new mongoose.Schema({
   itemName: {
     type: String,
@@ -19,11 +25,20 @@ const InquirySchema = new mongoose.Schema({
   },
   customer: {
     name: String,
-    email: String
+    email: String,
+    userId: String
   },
   isRead: {
     type: Boolean,
     default: false
+  },
+  isUserRead: {
+    type: Boolean,
+    default: true
+  },
+  replies: {
+    type: [ReplySchema],
+    default: []
   },
   createdAt: {
     type: Date,

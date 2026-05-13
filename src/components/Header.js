@@ -27,8 +27,28 @@ export default function Header() {
   const [searchCategory, setSearchCategory] = useState("All category");
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [unreadCount, setUnreadCount] = useState(0);
   const router = useRouter();
   const pathname = usePathname();
+
+  useEffect(() => {
+    if (!user) { setUnreadCount(0); return; }
+    const fetchUnread = async () => {
+      try {
+        const res = await fetch('/api/inquiries');
+        const data = await res.json();
+        if (user.role === 'admin') {
+          setUnreadCount(data.filter(i => !i.isRead).length);
+        } else {
+          const mine = data.filter(i => i.customer?.email === user.email);
+          setUnreadCount(mine.filter(i => i.isUserRead === false).length);
+        }
+      } catch (e) {}
+    };
+    fetchUnread();
+    const interval = setInterval(fetchUnread, 30000);
+    return () => clearInterval(interval);
+  }, [user]);
 
   // Hide header on login and register pages
   if (pathname === "/login" || pathname === "/register") return null;
@@ -144,8 +164,15 @@ export default function Header() {
             </Link>
           )}
           
-          <Link href="/messages" className="hidden sm:flex flex-col items-center gap-1 hover:text-primary transition-colors">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+          <Link href="/messages" className="hidden sm:flex flex-col items-center gap-1 hover:text-primary transition-colors relative">
+            <div className="relative">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+              {unreadCount > 0 && (
+                <span className="absolute -top-1.5 -right-2 bg-red-500 text-white text-[9px] font-bold rounded-full h-4 w-4 flex items-center justify-center border border-white">
+                  {unreadCount > 9 ? '9+' : unreadCount}
+                </span>
+              )}
+            </div>
             <span>Message</span>
           </Link>
           <Link href="/orders" className="hidden sm:flex flex-col items-center gap-1 hover:text-primary transition-colors">
