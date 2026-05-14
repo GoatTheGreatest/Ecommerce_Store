@@ -33,7 +33,11 @@ export default function SalesManagement() {
     try {
       const res = await fetch("/api/products");
       const data = await res.json();
-      setProducts(data);
+      if (user && user.role === "admin") {
+        setProducts(data.filter(p => p.sellerName === user.name || p.supplierName === user.name));
+      } else {
+        setProducts(data);
+      }
     } catch (error) {
       console.error("Error fetching products:", error);
     } finally {

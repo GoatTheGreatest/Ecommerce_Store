@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server';
 import dbConnect from '../../../../lib/db';
 import Inquiry from '../../../../models/Inquiry';
 
+export const dynamic = 'force-dynamic';
+
 export async function PATCH(request, { params: paramsPromise }) {
   const params = await paramsPromise;
   try {

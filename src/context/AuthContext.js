@@ -14,23 +14,36 @@ export const AuthProvider = ({ children }) => {
     if (savedUser) {
       setUser(JSON.parse(savedUser));
     }
+    
+    // Initialize default admins if not present
+    let allUsers = JSON.parse(localStorage.getItem("allUsers") || "[]");
+    if (allUsers.length === 0) {
+      const defaultAdmins = [
+        { id: "admin1", name: "TechAdmin", email: "tech@admin.com", password: "12345", phone: "+1 300 1234567", role: "admin", avatar: "", dob: "", gender: "", orders: [] },
+        { id: "admin2", name: "HomeAdmin", email: "home@admin.com", password: "12345", phone: "+1 300 1234567", role: "admin", avatar: "", dob: "", gender: "", orders: [] },
+        { id: "admin3", name: "FashionAdmin", email: "fashion@admin.com", password: "12345", phone: "+1 300 1234567", role: "admin", avatar: "", dob: "", gender: "", orders: [] },
+        { id: "admin4", name: "AutoAdmin", email: "auto@admin.com", password: "12345", phone: "+1 300 1234567", role: "admin", avatar: "", dob: "", gender: "", orders: [] },
+        { id: "admin5", name: "SportsAdmin", email: "sports@admin.com", password: "12345", phone: "+1 300 1234567", role: "admin", avatar: "", dob: "", gender: "", orders: [] },
+      ];
+      localStorage.setItem("allUsers", JSON.stringify(defaultAdmins));
+    }
+
     setLoading(false);
   }, []);
 
   const login = (email, password) => {
-    const correctRole = email.toLowerCase().includes("admin") ? "admin" : "user";
-    const savedUser = localStorage.getItem("user");
-    if (savedUser) {
-      const parsed = JSON.parse(savedUser);
-      if (parsed.email === email) {
-        // Always re-apply the correct role based on email
-        const updated = { ...parsed, role: correctRole };
-        setUser(updated);
-        localStorage.setItem("user", JSON.stringify(updated));
-        return true;
-      }
+    let users = JSON.parse(localStorage.getItem("allUsers") || "[]");
+    const foundUser = users.find(u => u.email === email && u.password === password);
+    
+    if (foundUser) {
+      setUser(foundUser);
+      localStorage.setItem("user", JSON.stringify(foundUser));
+      return true;
     }
 
+    const correctRole = email.toLowerCase().includes("admin") ? "admin" : "user";
+    
+    // For testing backwards compatibility or newly mocked non-registered ones
     const mockUser = {
       id: "1",
       name: email.split("@")[0],
@@ -51,10 +64,18 @@ export const AuthProvider = ({ children }) => {
   };
 
   const register = (name, email, password, role = "user", phone = "") => {
-    const mockUser = {
+    let users = JSON.parse(localStorage.getItem("allUsers") || "[]");
+    
+    // Check if user exists
+    if (users.find(u => u.email === email)) {
+      return false; 
+    }
+
+    const newUser = {
       id: Math.random().toString(36).substr(2, 9),
       name: name,
       email: email,
+      password: password,
       phone: phone,
       role: role,
       avatar: "",
@@ -62,8 +83,11 @@ export const AuthProvider = ({ children }) => {
       gender: "",
       orders: []
     };
-    setUser(mockUser);
-    localStorage.setItem("user", JSON.stringify(mockUser));
+    
+    users.push(newUser);
+    localStorage.setItem("allUsers", JSON.stringify(users));
+    setUser(newUser);
+    localStorage.setItem("user", JSON.stringify(newUser));
     return true;
   };
 

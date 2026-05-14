@@ -41,6 +41,7 @@ const CategorySection = ({ title, image, items, categoryName }) => (
             )}
           </div>
           <p className="text-[#1C1C1C] text-xs line-clamp-1 group-hover:text-primary">{item.name}</p>
+          <p className="text-[#8B96A5] text-[9px] mt-0.5 line-clamp-1">Sold by {item.sellerName || item.supplierName || 'Store Admin'}</p>
           <p className="text-[#8B96A5] text-[10px] mt-1">From <br/> USD {item.price}</p>
         </Link>
       ))}
@@ -295,6 +296,14 @@ export default function Home() {
                   )}
                 </div>
                 <p className="text-[#8B96A5] text-sm line-clamp-2 group-hover:text-primary transition-colors">{product.name}</p>
+                <div className="flex items-center gap-1 mt-1 border-t border-gray-100 pt-1">
+                  <div className="w-4 h-4 rounded-full bg-primary flex items-center justify-center text-white text-[8px] font-bold shrink-0">
+                    {(product.sellerName || product.supplierName || 'Admin')[0].toUpperCase()}
+                  </div>
+                  <p className="text-[10px] text-[#505050] truncate font-medium">
+                    {product.sellerName || product.supplierName || 'Store Admin'}
+                  </p>
+                </div>
               </Link>
             ))
           )}

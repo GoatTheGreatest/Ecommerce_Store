@@ -21,10 +21,13 @@ export default function NewProduct() {
     oldPrice: "",
     image: "",
     category: "Electronics",
+    subCategory: "",
     status: "In stock",
+    supplierName: user?.name || "Admin",
+    supplierRegion: "Global",
+    supplierFlag: "🌐",
+    supplierUrl: "store.com",
     stock: "20",
-    supplierName: "Guanjoy Trading LLC",
-    supplierRegion: "Germany, Berlin",
   });
 
   useEffect(() => {

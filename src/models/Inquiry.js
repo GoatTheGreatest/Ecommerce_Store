@@ -28,6 +28,10 @@ const InquirySchema = new mongoose.Schema({
     email: String,
     userId: String
   },
+  targetSeller: {
+    type: String,
+    default: "Admin Support"
+  },
   isRead: {
     type: Boolean,
     default: false

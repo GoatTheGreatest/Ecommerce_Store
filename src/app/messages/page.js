@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useAuth } from "../../context/AuthContext";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 
 export default function Messages() {
   const { user, loading: authLoading } = useAuth();
@@ -13,8 +14,19 @@ export default function Messages() {
   const [loading, setLoading] = useState(true);
   const [replyText, setReplyText] = useState("");
   const [sending, setSending] = useState(false);
-  const [showNewForm, setShowNewForm] = useState(false);
-  const [newMsg, setNewMsg] = useState({ itemName: "", details: "", quantity: 1, unit: "Pcs" });
+  const searchParams = useSearchParams();
+  const initNew = searchParams.get("new");
+  const initSeller = searchParams.get("sellerName");
+  const initItem = searchParams.get("item");
+
+  const [showNewForm, setShowNewForm] = useState(initNew === "1");
+  const [newMsg, setNewMsg] = useState({ 
+    itemName: initItem || "", 
+    details: "", 
+    quantity: 1, 
+    unit: "Pcs",
+    targetSeller: initSeller || "Admin Support"
+  });
   const [submitting, setSubmitting] = useState(false);
   const chatEndRef = useRef(null);
 
@@ -32,7 +44,15 @@ export default function Messages() {
     try {
       const res = await fetch("/api/inquiries");
       const data = await res.json();
-      const filtered = isAdmin ? data : data.filter(i => i.customer?.email === user?.email);
+      
+      let filtered = data;
+      if (isAdmin) {
+        // Admins see messages directed to them (or broadcast "Admin Support")
+        filtered = data.filter(i => !i.targetSeller || i.targetSeller === "Admin Support" || i.targetSeller === user.name);
+      } else {
+        // Users see only their own messages
+        filtered = data.filter(i => i.customer?.email === user?.email);
+      }
       setInquiries(filtered);
       
       // Auto-select conversation for user if it's their only one
@@ -58,14 +78,21 @@ export default function Messages() {
           return acc;
         }, {})
       )
-    : inquiries.length > 0
-      ? [{ email: "admin", name: "Admin Support", inquiries }] // User sees one grouped conversation
-      : [];
+    : Object.values(
+        inquiries.reduce((acc, inq) => {
+          const seller = inq.targetSeller || "Admin Support";
+          if (!acc[seller]) {
+            acc[seller] = { email: seller, name: seller, inquiries: [] };
+          }
+          acc[seller].inquiries.push(inq);
+          return acc;
+        }, {})
+      );
 
   const selectedConversationInquiries = isAdmin && selectedEmail
     ? [...inquiries.filter(i => i.customer?.email === selectedEmail)].sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt))
-    : !isAdmin && selectedEmail === "admin"
-      ? [...inquiries].sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt))
+    : !isAdmin && selectedEmail
+      ? [...inquiries.filter(i => (i.targetSeller || "Admin Support") === selectedEmail)].sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt))
       : [];
 
   const selectedGroup = customerGroups.find(g => g.email === selectedEmail);
@@ -155,9 +182,9 @@ export default function Messages() {
       });
       const created = await res.json();
       setInquiries(prev => [created, ...prev]);
-      setNewMsg({ itemName: "", details: "", quantity: 1, unit: "Pcs" });
+      setNewMsg({ itemName: "", details: "", quantity: 1, unit: "Pcs", targetSeller: "Admin Support" });
       setShowNewForm(false);
-      setSelectedEmail("admin");
+      setSelectedEmail(newMsg.targetSeller);
     } catch (err) {
       console.error(err);
     } finally {
@@ -261,7 +288,7 @@ export default function Messages() {
               <div className="flex-1 flex flex-col">
                 <div className="p-4 bg-white border-b border-gray-100 flex items-center gap-3">
                   <button onClick={() => setShowNewForm(false)} className="text-gray-400 hover:text-primary">← Back</button>
-                  <h2 className="font-bold text-[#1C1C1C]">New Message to Admin</h2>
+                  <h2 className="font-bold text-[#1C1C1C]">New Message to {newMsg.targetSeller}</h2>
                 </div>
                 <div className="flex-1 p-6 overflow-y-auto">
                   <form onSubmit={handleNewInquiry} className="max-w-xl mx-auto space-y-4">
