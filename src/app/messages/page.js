@@ -10,25 +10,31 @@ export default function Messages() {
   const isAdmin = user?.role === "admin";
 
   const [inquiries, setInquiries] = useState([]);
-  const [selectedEmail, setSelectedEmail] = useState(null); // Used by both admin (customer email) and user ("admin")
-  const [loading, setLoading] = useState(true);
-  const [replyText, setReplyText] = useState("");
-  const [sending, setSending] = useState(false);
   const searchParams = useSearchParams();
   const initNew = searchParams.get("new");
   const initSeller = searchParams.get("sellerName");
   const initItem = searchParams.get("item");
 
-  const [showNewForm, setShowNewForm] = useState(initNew === "1");
-  const [newMsg, setNewMsg] = useState({ 
-    itemName: initItem || "", 
-    details: "", 
-    quantity: 1, 
+  const [loading, setLoading] = useState(true);
+  const [replyText, setReplyText] = useState("");
+  const [sending, setSending] = useState(false);
+  const [selectedEmail, setSelectedEmail] = useState(initSeller || null);
+  const [showNewForm, setShowNewForm] = useState(false);
+  const [newMsg, setNewMsg] = useState({
+    itemName: initItem || "",
+    details: "",
+    quantity: 1,
     unit: "Pcs",
     targetSeller: initSeller || "Admin Support"
   });
   const [submitting, setSubmitting] = useState(false);
   const chatEndRef = useRef(null);
+
+  useEffect(() => {
+    if (initSeller) {
+      setSelectedEmail(initSeller);
+    }
+  }, [initSeller]);
 
   useEffect(() => {
     if (!authLoading && user) {
@@ -44,17 +50,22 @@ export default function Messages() {
     try {
       const res = await fetch("/api/inquiries");
       const data = await res.json();
-      
+
       let filtered = data;
       if (isAdmin) {
-        // Admins see messages directed to them (or broadcast "Admin Support")
-        filtered = data.filter(i => !i.targetSeller || i.targetSeller === "Admin Support" || i.targetSeller === user.name);
+        // Admins see messages directed to them OR messages they sent to others
+        filtered = data.filter(i => 
+          !i.targetSeller || 
+          i.targetSeller === "Admin Support" || 
+          i.targetSeller === user.name ||
+          i.customer?.email === user.email
+        );
       } else {
         // Users see only their own messages
         filtered = data.filter(i => i.customer?.email === user?.email);
       }
       setInquiries(filtered);
-      
+
       // Auto-select conversation for user if it's their only one
       if (!isAdmin && filtered.length > 0 && !selectedEmail && !showNewForm) {
         setSelectedEmail("admin");
@@ -67,33 +78,40 @@ export default function Messages() {
   };
 
   // ── Grouping Logic ───────────────────────────────────────────────────────
-  const customerGroups = isAdmin
-    ? Object.values(
-        inquiries.reduce((acc, inq) => {
-          const email = inq.customer?.email || "unknown";
-          if (!acc[email]) {
-            acc[email] = { email, name: inq.customer?.name, inquiries: [] };
-          }
-          acc[email].inquiries.push(inq);
-          return acc;
-        }, {})
-      )
-    : Object.values(
-        inquiries.reduce((acc, inq) => {
-          const seller = inq.targetSeller || "Admin Support";
-          if (!acc[seller]) {
-            acc[seller] = { email: seller, name: seller, inquiries: [] };
-          }
-          acc[seller].inquiries.push(inq);
-          return acc;
-        }, {})
-      );
+  const getOtherParty = (inq) => {
+    if (inq.customer?.email === user?.email) {
+      return {
+        email: inq.targetSeller || "Admin Support",
+        name: inq.targetSeller || "Admin Support"
+      };
+    }
+    return {
+      email: inq.customer?.email || "unknown",
+      name: inq.customer?.name || "Unknown Customer"
+    };
+  };
 
-  const selectedConversationInquiries = isAdmin && selectedEmail
-    ? [...inquiries.filter(i => i.customer?.email === selectedEmail)].sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt))
-    : !isAdmin && selectedEmail
-      ? [...inquiries.filter(i => (i.targetSeller || "Admin Support") === selectedEmail)].sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt))
-      : [];
+  const customerGroups = Object.values(
+    inquiries.reduce((acc, inq) => {
+      const party = getOtherParty(inq);
+      if (!acc[party.email]) {
+        acc[party.email] = { email: party.email, name: party.name, inquiries: [] };
+      }
+      acc[party.email].inquiries.push(inq);
+      return acc;
+    }, {})
+  );
+
+  if (initSeller) {
+    const exists = customerGroups.find(g => g.email === initSeller);
+    if (!exists) {
+      customerGroups.unshift({ email: initSeller, name: initSeller, inquiries: [] });
+    }
+  }
+
+  const selectedConversationInquiries = selectedEmail
+    ? [...inquiries.filter(i => getOtherParty(i).email === selectedEmail)].sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt))
+    : [];
 
   const selectedGroup = customerGroups.find(g => g.email === selectedEmail);
 
@@ -104,7 +122,7 @@ export default function Messages() {
     setSelectedEmail(group.email);
     setShowNewForm(false);
     setReplyText("");
-    
+
     // Mark inquiries as read depending on role
     if (isAdmin) {
       const unread = group.inquiries.filter(i => !i.isRead);
@@ -135,7 +153,7 @@ export default function Messages() {
         ));
       }
     }
-    
+
     // Refresh the thread
     const updated = await Promise.all(
       group.inquiries.map(i => fetch(`/api/inquiries/${i._id}`).then(r => r.json()))
@@ -145,21 +163,40 @@ export default function Messages() {
 
   const handleSendReply = async (e) => {
     e.preventDefault();
-    if (!replyText.trim() || !latestInquiry) return;
+    if (!replyText.trim()) return;
     setSending(true);
     try {
-      const res = await fetch(`/api/inquiries/${latestInquiry._id}`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          sender: isAdmin ? "admin" : "user",
-          text: replyText.trim(),
-          senderName: isAdmin ? "Admin" : user.name, // Display simple "Admin" instead of admin's real name for users
-        }),
-      });
-      const updated = await res.json();
-      setInquiries(prev => prev.map(i => i._id === updated._id ? updated : i));
-      setReplyText("");
+      if (!latestInquiry) {
+        // Create new inquiry directly from chat box
+        const res = await fetch("/api/inquiries", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            itemName: initItem || "General Inquiry",
+            details: replyText.trim(),
+            quantity: 1,
+            unit: "Pcs",
+            targetSeller: selectedEmail,
+            customer: { name: user.name, email: user.email, userId: user.id },
+          }),
+        });
+        const created = await res.json();
+        setInquiries(prev => [created, ...prev]);
+        setReplyText("");
+      } else {
+        const res = await fetch(`/api/inquiries/${latestInquiry._id}`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            sender: isAdmin && latestInquiry.customer?.email !== user.email ? "admin" : "user",
+            text: replyText.trim(),
+            senderName: isAdmin && latestInquiry.customer?.email !== user.email ? "Admin" : user.name,
+          }),
+        });
+        const updated = await res.json();
+        setInquiries(prev => prev.map(i => i._id === updated._id ? updated : i));
+        setReplyText("");
+      }
     } catch (err) {
       console.error(err);
     } finally {
@@ -233,7 +270,7 @@ export default function Messages() {
               )}
               {isAdmin && (
                 <button onClick={fetchInquiries} className="p-1.5 bg-gray-100 rounded-lg hover:bg-gray-200 transition-all text-primary" title="Refresh">
-                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/></svg>
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8" /><path d="M21 3v5h-5" /></svg>
                 </button>
               )}
             </div>
@@ -249,29 +286,29 @@ export default function Messages() {
                 </div>
               ) : (
                 customerGroups.map(group => {
-                  const unreadCount = isAdmin 
-                    ? group.inquiries.filter(i => !i.isRead).length 
+                  const unreadCount = isAdmin
+                    ? group.inquiries.filter(i => !i.isRead).length
                     : group.inquiries.filter(i => i.isUserRead === false).length;
                   const hasAdminReply = !isAdmin && group.inquiries.some(i => i.replies?.some(r => r.sender === "admin"));
                   const lastInq = [...group.inquiries].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))[0];
-                  
+
                   return (
                     <div key={group.email} onClick={() => handleSelectCustomer(group)}
                       className={`p-4 flex items-center gap-3 cursor-pointer transition-all border-l-4 ${selectedEmail === group.email && !showNewForm ? "bg-blue-50 border-primary" : "border-transparent hover:bg-gray-50"}`}>
-                      <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center text-white font-bold flex-shrink-0">
+                      <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center text-white font-bold shrink-0">
                         {isAdmin ? group.name?.[0]?.toUpperCase() : "A"}
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex justify-between items-start">
                           <h3 className={`text-sm truncate ${unreadCount > 0 ? "font-black text-[#1C1C1C]" : "font-bold text-[#1C1C1C]"}`}>{group.name}</h3>
-                          <span className="text-[10px] text-[#8B96A5] ml-1 flex-shrink-0">{new Date(lastInq.createdAt).toLocaleDateString()}</span>
+                          {lastInq && <span className="text-[10px] text-[#8B96A5] ml-1 shrink-0">{new Date(lastInq.createdAt).toLocaleDateString()}</span>}
                         </div>
-                        <p className="text-xs text-[#8B96A5] truncate">{isAdmin ? lastInq.details : "Click to view conversation"}</p>
+                        <p className="text-xs text-[#8B96A5] truncate">{isAdmin ? lastInq?.details : "Click to view conversation"}</p>
                         {hasAdminReply && <span className="text-[10px] font-bold text-green-600 mt-0.5 inline-block">● Admin replied</span>}
-                        {isAdmin && <p className="text-[10px] text-primary mt-0.5">{group.inquiries.length} inquiry/messages</p>}
+                        {isAdmin && lastInq && <p className="text-[10px] text-primary mt-0.5">{group.inquiries.length} inquiry/messages</p>}
                       </div>
                       {unreadCount > 0 && (
-                        <span className="w-5 h-5 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center flex-shrink-0">{unreadCount}</span>
+                        <span className="w-5 h-5 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center shrink-0">{unreadCount}</span>
                       )}
                     </div>
                   );
@@ -343,12 +380,19 @@ export default function Messages() {
                 </div>
 
                 <div className="flex-1 overflow-y-auto p-6 space-y-6">
+                  {selectedConversationInquiries.length === 0 && (
+                    <div className="flex flex-col items-center justify-center h-full text-center space-y-3 opacity-60">
+                      <div className="text-4xl">👋</div>
+                      <p className="text-[#1C1C1C] font-bold">Say hello to {selectedGroup.name}</p>
+                      <p className="text-sm text-[#8B96A5]">You haven't messaged this seller yet.<br />Type below to start the conversation!</p>
+                    </div>
+                  )}
                   {selectedConversationInquiries.map((inq, idx) => {
                     const messages = [
-                      { sender: "user", text: inq.details, name: inq.customer?.name, time: inq.createdAt, isInitial: true },
-                      ...(inq.replies || []).map(r => ({ sender: r.sender, text: r.text, name: r.senderName, time: r.createdAt }))
+                      { _id: `init-${inq._id}`, sender: "user", text: inq.details, name: inq.customer?.name, time: inq.createdAt, isInitial: true },
+                      ...(inq.replies || []).map((r, ri) => ({ _id: r._id || `reply-${ri}`, sender: r.sender, text: r.text, name: r.senderName, time: r.createdAt }))
                     ];
-                    
+
                     return (
                       <div key={inq._id} className="space-y-2">
                         {/* Subject label for the thread */}
@@ -359,25 +403,25 @@ export default function Messages() {
                         </div>
 
                         {messages.map((msg, mi) => {
-                          // "isMine" depends on who is viewing it
-                          const isMine = isAdmin ? msg.sender === "admin" : msg.sender === "user";
-                          
+                          // "isMine" is determined by whether we sent the message
+                          const isMine = (msg.sender === "user" && inq.customer?.email === user?.email) || 
+                                         (msg.sender === "admin" && inq.customer?.email !== user?.email);
+
                           // Determine if we show the avatar/name
                           const showSenderInfo = mi === 0 || messages[mi - 1]?.sender !== msg.sender;
 
                           return (
-                            <div key={mi} className={`flex items-end gap-2 ${isMine ? "flex-row-reverse" : ""}`}>
+                            <div key={msg._id} className={`flex items-end gap-2 ${isMine ? "flex-row-reverse" : ""}`}>
                               {showSenderInfo ? (
-                                <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 ${isMine ? "bg-primary text-white" : "bg-gray-200 text-[#505050]"}`}>
+                                <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold shrink-0 ${isMine ? "bg-primary text-white" : "bg-gray-200 text-[#505050]"}`}>
                                   {msg.sender === "admin" ? "A" : msg.name?.[0]?.toUpperCase()}
                                 </div>
-                              ) : <div className="w-8 flex-shrink-0" />}
+                              ) : <div className="w-8 shrink-0" />}
 
-                              <div className={`max-w-[70%] px-4 py-3 rounded-2xl text-sm shadow-sm ${
-                                isMine 
-                                  ? "bg-primary text-white rounded-br-sm" 
+                              <div className={`max-w-[70%] px-4 py-3 rounded-2xl text-sm shadow-sm ${isMine
+                                  ? "bg-primary text-white rounded-br-sm"
                                   : "bg-white border border-gray-100 text-[#1C1C1C] rounded-bl-sm"
-                              }`}>
+                                }`}>
                                 {showSenderInfo && (
                                   <p className={`text-[10px] font-bold mb-1 ${isMine ? "opacity-70 text-white" : "text-primary"}`}>
                                     {isMine ? "You" : (msg.sender === "admin" ? `Admin Support` : msg.name)}
@@ -405,7 +449,7 @@ export default function Messages() {
                     <button type="submit" disabled={sending || !replyText.trim()}
                       className="bg-primary text-white p-3 rounded-lg shadow-md hover:bg-blue-700 transition-all active:scale-95 disabled:opacity-50 flex items-center justify-center">
                       {sending ? <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> :
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="rotate-90 translate-x-0.5"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></svg>}
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="rotate-90 translate-x-0.5"><path d="m22 2-7 20-4-9-9-4Z" /><path d="M22 2 11 13" /></svg>}
                     </button>
                   </form>
                 </div>

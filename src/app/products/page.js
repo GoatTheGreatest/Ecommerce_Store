@@ -214,7 +214,7 @@ function ProductsContent() {
                     <Link href={`/product/${product._id}`} className="text-[#505050] hover:text-primary block mb-1 font-medium line-clamp-2">{product.name}</Link>
                     <div className="text-xs text-[#8B96A5] mb-2 font-medium flex items-center gap-1">
                       <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" /><circle cx="12" cy="10" r="3" /></svg>
-                      Sold by: <span className="text-primary">{product.sellerName || product.supplierName || "Independent Seller"}</span>
+                      Sold by: <Link href={`/messages?new=1&sellerName=${encodeURIComponent(product.sellerName || product.supplierName || "Admin Support")}&item=${encodeURIComponent(product.name)}`} className="text-primary hover:underline">{product.sellerName || product.supplierName || "Independent Seller"}</Link>
                     </div>
                     {viewMode === "list" && <p className="text-[#8B96A5] text-sm mb-4 line-clamp-3">{product.description}</p>}
 

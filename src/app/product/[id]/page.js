@@ -142,9 +142,9 @@ export default function ProductDetail({ params: paramsPromise }) {
                 </div>
                 <div>
                   <p className="text-[10px] text-[#8B96A5] font-bold uppercase mb-0.5">Shopkeeper</p>
-                  <p className="text-[#1C1C1C] font-black leading-tight text-lg">
+                  <Link href={`/messages?new=1&sellerName=${encodeURIComponent(product.sellerName || product.supplierName || "Admin Support")}&item=${encodeURIComponent(product.name)}`} className="text-[#1C1C1C] font-black leading-tight text-lg hover:text-primary transition-colors">
                     {product.sellerName || product.supplierName || "Independent Seller"}
-                  </p>
+                  </Link>
                 </div>
               </div>
               <div className="space-y-2 text-[#8B96A5] text-sm mb-4">
@@ -169,7 +169,7 @@ export default function ProductDetail({ params: paramsPromise }) {
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="8" cy="21" r="1" /><circle cx="19" cy="21" r="1" /><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12" /></svg>
                 Add to cart
               </button>
-              <button className="w-full btn-outline text-sm mb-2">Send inquiry</button>
+              <Link href={`/messages?new=1&sellerName=${encodeURIComponent(product.sellerName || product.supplierName || "Admin Support")}&item=${encodeURIComponent(product.name)}`} className="w-full btn-outline text-sm mb-2 block text-center">Send inquiry</Link>
               <button className="w-full btn-outline text-sm">Seller&apos;s profile</button>
             </div>
             <button className="w-full mt-4 flex items-center justify-center gap-2 text-primary font-medium hover:text-blue-700 transition-colors">
